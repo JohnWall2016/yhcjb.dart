@@ -8,15 +8,21 @@ class Json {
   const Json({this.name, this.ignored});
 }
 
-class Undefined {
-  const Undefined();
-}
-
-const undefined = Undefined();
-
 class Jsonable<T> {
-  T fromMap(Map<String, dynamic> map) {
-    var inst = reflect(this);
+  static T fromJson<T>(String json) {
+    return fromMap(convert.json.decode(json));
+  }
+
+  String toJson() {
+    return convert.json.encode(toMap());
+  }
+
+  static T fromMap<T>(Map<String, dynamic> map) {
+    return _fromMap(map, reflectType(T));
+  }
+
+  static _fromMap(Map<String, dynamic> map, ClassMirror klass) {
+    var inst = klass.newInstance(Symbol(''), []);
 
     inst.type.declarations.values.forEach((decl) {
       if (decl is VariableMirror) {
@@ -35,28 +41,32 @@ class Jsonable<T> {
         name ??= MirrorSystem.getName(decl.simpleName);
         if (map.containsKey(name)) {
           var value = map[name];
-          if (value is Map && decl.type.isSubtypeOf(reflectType(Jsonable))) {
-            print(value);
-            var newInst =
-                (decl.type as ClassMirror).newInstance(Symbol(''), []);
-            inst.setField(decl.simpleName, newInst.reflectee.fromMap(value));
+          var simpleName = decl.simpleName;
+          var type = decl.type;
+          var argType =
+              type.typeArguments.isNotEmpty ? type.typeArguments.first : null;
+          if (value == null) {
+            inst.setField(simpleName, value);
           } else if (value is List &&
-              decl.type.isSubtypeOf(reflectType(List)) &&
-              decl.type.typeArguments[0].isSubtypeOf(reflectType(Jsonable))) {
-            print(value);
-            inst.setField(
-                decl.simpleName,
-                value.map((v) {
-                  var newInst = (decl.type.typeArguments[0] as ClassMirror)
-                      .newInstance(Symbol(''), []);
-                  return newInst.reflectee.fromMap(v);
-                }).toList());
+              type.simpleName == #List &&
+              argType != null &&
+              argType.isSubtypeOf(reflectType(Jsonable))) {
+            var listMirror = reflectType(List, [argType.reflectedType]);
+            var list = (listMirror as ClassMirror).newInstance(Symbol(''), []);
+            value.forEach((v) {
+              list.reflectee.add(Jsonable._fromMap(v, argType));
+            });
+            inst.setField(simpleName, list.reflectee);
+          } else if (value is Map && type.isSubtypeOf(reflectType(Jsonable))) {
+            inst.setField(simpleName, Jsonable._fromMap(value, type));
+          } else if (reflectType(value.runtimeType).isAssignableTo(type)) {
+            inst.setField(simpleName, value);
           }
         }
       }
     });
 
-    return inst.reflectee as T;
+    return inst.reflectee;
   }
 
   Map<String, dynamic> toMap() {
@@ -67,11 +77,11 @@ class Jsonable<T> {
       if (value is bool || value is num || value is String || value == null) {
         return value;
       } else if (value is List) {
-        return value.map((v) => getValue(v) ?? null).toList();
+        return value.map((v) => getValue(v)).toList();
       } else if (value is Jsonable) {
         return value.toMap();
       } else {
-        return undefined;
+        return null;
       }
     }
 
@@ -92,9 +102,7 @@ class Jsonable<T> {
         name ??= MirrorSystem.getName(decl.simpleName);
         var obj = inst.getField(decl.simpleName).reflectee;
         var value = getValue(obj);
-        if (value != undefined) {
-          map[name] = value;
-        }
+        map[name] = value;
       }
     });
 
