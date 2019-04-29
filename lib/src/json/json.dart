@@ -102,7 +102,7 @@ class Jsonable {
     } else if (value is List) {
       return value.map((v) => _getValue(v)).toList();
     } else if (value is Map) {
-      value.map((k, v) => MapEntry(k, _getValue(v)));
+      return value.map((k, v) => MapEntry(k, _getValue(v)));
     } else {
       return null;
     }

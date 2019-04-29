@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:yhcjb/src/json/json.dart';
 
 main(List<String> args) {
@@ -26,6 +24,8 @@ class Employee extends IdName {
   List skills;
 
   List<Education> educations;
+
+  List records = [];
 }
 
 testJson() {
@@ -37,7 +37,8 @@ testJson() {
     ..skills = ['negotiation', 'programming', 'accounting']
     ..educations = [
       Education._('HS', 'ABC'), Education._('BA', 'MIT')
-    ];
+    ]
+    ..records.add({'2018': 'IBM'});
 
   var json = emp.toJson();
   print(json);
@@ -45,4 +46,5 @@ testJson() {
   emp = Jsonable.fromJson<Employee>(json);
   print(emp.skills);
   emp.educations.forEach((e) => print('${e.name} ${e.school}'));
+  print(emp.records);
 }

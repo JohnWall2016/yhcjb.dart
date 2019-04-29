@@ -15,27 +15,28 @@ class Session extends SyncSocket {
         _password = password,
         super(host, port);
 
-  static HttpHeader _defaultHttpHeader = HttpHeader()
-    ..add('Connection', 'keep-alive')
-    ..add('Accept', 'application/json, text/javascript, */*; q=0.01')
-    ..add('X-Requested-With', 'XMLHttpRequest')
-    ..add('User-Agent',
-        'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')
-    ..add('Content-Type', 'multipart/form-data;charset=UTF-8')
-    ..add('Accept-Encoding', 'gzip, deflate')
-    ..add('Accept-Language', 'zh-CN,zh;q=0.8');
-
-  HttpRequest _buildRequest(String content) {
-    var request = HttpRequest('/hncjb/reports/crud',
-        method: 'POST', header: _defaultHttpHeader)
+  _createRequest() {
+    var request = HttpRequest('/hncjb/reports/crud', method: 'POST')
       ..addHeader('Host', url)
+      ..addHeader('Connection', 'keep-alive')
+      ..addHeader('Accept', 'application/json, text/javascript, */*; q=0.01')
       ..addHeader('Origin', 'http://${url}')
-      ..addHeader('Referer', 'http://${url}/hncjb/pages/html/index.html');
-
+      ..addHeader('X-Requested-With', 'XMLHttpRequest')
+      ..addHeader('User-Agent',
+          'Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')
+      ..addHeader('Content-Type', 'multipart/form-data;charset=UTF-8')
+      ..addHeader('Referer', 'http://${url}/hncjb/pages/html/index.html')
+      ..addHeader('Accept-Encoding', 'gzip, deflate')
+      ..addHeader('Accept-Language', 'zh-CN,zh;q=0.8');
     if (_sessionId != null) {
       request.addHeader(
           'Cookie', 'jsessionid_ylzcbp=$_sessionId; cxcookie=$_cxCookie');
     }
+    return request;
+  }
+
+  HttpRequest _buildRequest(String content) {
+    var request = _createRequest();
     request.addBody(content);
     return request;
   }
@@ -76,11 +77,9 @@ class Session extends SyncSocket {
         return;
       }
     });
-
     readHttpBody(header);
 
     sendService(Syslogin(_userId, _password));
-
     return readHttpBody();
   }
 
@@ -137,9 +136,9 @@ class Parameters extends Jsonable {
 
 class PageParameters extends Parameters {
   final int page, pagesize;
-  final List<Map> filtering = [];
-  final List<Map> sorting = [];
-  final List<Map> totals = [];
+  final List filtering = [];
+  final List sorting = [];
+  final List totals = [];
 
   PageParameters(String id, {this.page = 1, this.pagesize = 15}) : super(id);
 
@@ -165,19 +164,23 @@ class Syslogin extends Parameters {
 }
 
 class GrinfoQuery extends PageParameters {
+  /// 行政区划编码
   @Json(name: "aaf013")
-  String xzqh = ""; // 行政区划编码
+  String xzqh = "";
 
+  /// 村级编码
   @Json(name: "aaz070")
-  String cjbm = ""; // 村级编码
+  String cjbm = "";
 
   String aaf101 = "", aac009 = "";
 
+  /// 参保状态: "1"-正常参保 "2"-暂停参保 "4"-终止参保 "0"-未参保
   @Json(name: "aac008")
-  String cbzt = ""; // 参保状态: "1"-正常参保 "2"-暂停参保 "4"-终止参保 "0"-未参保
+  String cbzt = "";
 
+  ///缴费状态: "1"-参保缴费 "2"-暂停缴费 "3"-终止缴费
   @Json(name: "aac031")
-  String jfzt = ""; //缴费状态: "1"-参保缴费 "2"-暂停缴费 "3"-终止缴费
+  String jfzt = "";
 
   String aac006str = "", aac006end = "";
   String aac066 = "", aae030str = "";
@@ -186,22 +189,26 @@ class GrinfoQuery extends PageParameters {
   @Json(name: "aac003")
   String name = "";
 
+  /// 身份证号码
   @Json(name: "aac002")
-  String pid = ""; // 身份证号码
+  String idcard = "";
 
   String aae478 = "";
 
-  GrinfoQuery(String pid) : super("zhcxgrinfoQuery") {
-    this.pid = pid;
+  GrinfoQuery(String idcard) : super("zhcxgrinfoQuery") {
+    this.idcard = idcard;
   }
 }
 
+/// 个人综合信息
 class Grinfo extends Jsonable {
+  /// 个人编号
   @Json(name: "aac001")
-  int grbh; // 个人编号
+  int grbh;
 
+  /// 身份证号码
   @Json(name: "aac002")
-  String idcard; // 身份证号码
+  String idcard;
 
   @Json(name: "aac003")
   String name;
@@ -209,14 +216,17 @@ class Grinfo extends Jsonable {
   @Json(name: "aac006")
   int birthday;
 
+  /// 参保状态: "1"-正常参保 "2"-暂停参保 "4"-终止参保 "0"-未参保
   @Json(name: "aac008")
-  String cbzt; // 参保状态: "1"-正常参保 "2"-暂停参保 "4"-终止参保 "0"-未参保
+  String cbzt;
 
+  /// 户口所在地
   @Json(name: "aac010")
-  String hkszd; // 户口所在地
+  String hkszd;
 
+  /// 缴费状态: "1"-参保缴费 "2"-暂停缴费 "3"-终止缴费
   @Json(name: "aac031")
-  String jfzt; // 缴费状态: "1"-参保缴费 "2"-暂停缴费 "3"-终止缴费
+  String jfzt;
 
   @Json(name: "aae005")
   String phone;
@@ -227,12 +237,15 @@ class Grinfo extends Jsonable {
   @Json(name: "aae010")
   String bankcard;
 
+  /// 行政区划编码
   @Json(name: "aaf101")
-  String xzqh; // 行政区划编码
+  String xzqh;
 
+  /// 村组名称
   @Json(name: "aaf102")
-  String czmc; // 村组名称
+  String czmc;
 
+  /// 村社区名称
   @Json(name: "aaf103")
-  String csmc; // 村社区名称
+  String csmc;
 }
