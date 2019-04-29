@@ -1,6 +1,6 @@
 import 'package:yhcjb/src/json/json.dart';
 
-main(List<String> args) {
+main() {
   testJson();
 }
 
