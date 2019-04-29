@@ -8,7 +8,7 @@ class Json {
   const Json({this.name, this.ignored});
 }
 
-class Jsonable<T> {
+class Jsonable {
   static T fromJson<T>(String json) {
     return fromMap(convert.json.decode(json));
   }
