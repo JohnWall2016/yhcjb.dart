@@ -1,16 +1,13 @@
-import 'package:yhcjb/src/json/json.dart';
 import 'package:yhcjb/src/net/session.dart';
 
 main() {
-  var serv = Service(
-      id: 'executeSncbxxConQ',
-      params: SncbxxConQ()..idcard = '430302197502023052',
-      userId: '430302002',
-      password: '72fb9d9c611b751ddeaefdedda7a557b');
-  print(serv.toJson());
-}
+  print(GrinfoQuery('430311195702091516').toJson());
 
-class SncbxxConQ extends Jsonable {
-  @Json(name: 'aac002')
-  String idcard;
+  Session.use((s) {
+    s.sendService(GrinfoQuery('430311195702091516'));
+    var result = s.getResult<Grinfo>();
+    print(result[0].name);
+    print(result[0].idcard);
+    print(result[0].toJson());
+  });
 }

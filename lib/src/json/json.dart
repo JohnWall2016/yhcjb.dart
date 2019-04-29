@@ -18,13 +18,16 @@ class Jsonable<T> {
   }
 
   static T fromMap<T>(Map<String, dynamic> map) {
-    return _fromMap(map, reflectType(T));
+    var clazz = reflectType(T) as ClassMirror;
+    var inst = clazz.newInstance(Symbol(''), []);
+    _fromMap(map, inst, clazz);
+    return inst.reflectee;
   }
 
-  static _fromMap(Map<String, dynamic> map, ClassMirror klass) {
-    var inst = klass.newInstance(Symbol(''), []);
+  static _fromMap(Map<String, dynamic> map, InstanceMirror inst, ClassMirror clazz) {
+    if (!clazz.isSubtypeOf(reflectType(Jsonable))) return;
 
-    inst.type.declarations.values.forEach((decl) {
+    clazz.declarations.values.forEach((decl) {
       if (decl is VariableMirror) {
         String name;
         var meta = decl.metadata.firstWhere(
@@ -58,11 +61,17 @@ class Jsonable<T> {
             var listMirror = reflectType(List, [argType.reflectedType]);
             var list = (listMirror as ClassMirror).newInstance(Symbol(''), []);
             value.forEach((v) {
-              list.reflectee.add(Jsonable._fromMap(v, argType));
+              var argClazz = (argType as ClassMirror); 
+              var argInst = argClazz.newInstance(Symbol(''), []);
+              Jsonable._fromMap(v, argInst, argClazz);
+              list.reflectee.add(argInst.reflectee);
             });
             inst.setField(simpleName, list.reflectee);
           } else if (value is Map && type.isSubtypeOf(reflectType(Jsonable))) {
-            inst.setField(simpleName, Jsonable._fromMap(value, type));
+              var argClazz = (Type as ClassMirror); 
+              var argInst = argClazz.newInstance(Symbol(''), []);
+              Jsonable._fromMap(value, argInst, argClazz);
+            inst.setField(simpleName, argInst.reflectee);
           } else if (reflectType(value.runtimeType).isAssignableTo(type)) {
             inst.setField(simpleName, value);
           }
@@ -70,46 +79,53 @@ class Jsonable<T> {
       }
     });
 
-    return inst.reflectee;
+    _fromMap(map, inst, clazz.superclass);
+  }
+
+  void _toMap(InstanceMirror inst, ClassMirror clazz, Map<String, dynamic> map) {
+    if (clazz.isSubtypeOf(reflectType(Jsonable))) {
+
+      getValue(value) {
+        if (value is bool || value is num || value is String || value == null) {
+          return value;
+        } else if (value is List) {
+          return value.map((v) => getValue(v)).toList();
+        } else if (value is Jsonable) {
+          return value.toMap();
+        } else {
+          return null;
+        }
+      }
+
+      clazz.declarations.values.forEach((decl) {
+        if (decl is VariableMirror) {
+          String name;
+          var meta = decl.metadata.firstWhere(
+              (metadataMirror) => metadataMirror.reflectee is Json,
+              orElse: () => null);
+          if (meta != null) {
+            Json json = meta.reflectee;
+            if (json.ignored != null && json.ignored)
+              return;
+            else if (json.name != null && json.name.isNotEmpty) {
+              name = json.name;
+            }
+          }
+          name ??= MirrorSystem.getName(decl.simpleName);
+          var obj = inst.getField(decl.simpleName).reflectee;
+          var value = getValue(obj);
+          map[name] = value;
+        }
+      });
+
+      _toMap(inst, clazz.superclass, map);
+    }
   }
 
   Map<String, dynamic> toMap() {
     InstanceMirror inst = reflect(this);
     Map<String, dynamic> map = {};
-
-    getValue(value) {
-      if (value is bool || value is num || value is String || value == null) {
-        return value;
-      } else if (value is List) {
-        return value.map((v) => getValue(v)).toList();
-      } else if (value is Jsonable) {
-        return value.toMap();
-      } else {
-        return null;
-      }
-    }
-
-    inst.type.declarations.values.forEach((decl) {
-      if (decl is VariableMirror) {
-        String name;
-        var meta = decl.metadata.firstWhere(
-            (metadataMirror) => metadataMirror.reflectee is Json,
-            orElse: () => null);
-        if (meta != null) {
-          Json json = meta.reflectee;
-          if (json.ignored != null && json.ignored)
-            return;
-          else if (json.name != null && json.name.isNotEmpty) {
-            name = json.name;
-          }
-        }
-        name ??= MirrorSystem.getName(decl.simpleName);
-        var obj = inst.getField(decl.simpleName).reflectee;
-        var value = getValue(obj);
-        map[name] = value;
-      }
-    });
-
+    _toMap(inst, inst.type, map);
     return map;
   }
 }

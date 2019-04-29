@@ -28,7 +28,7 @@ class SyncSocket {
 
   int readInt() {
     var buf = read(1);
-    if (buf.isNotEmpty) return buf[0];
+    if (buf != null && buf.isNotEmpty) return buf[0];
     return null;
   }
 
@@ -58,17 +58,19 @@ class SyncSocket {
     }
   }
 
-  String readHttpHeader() {
-    var buf = StringBuffer();
+  HttpHeader readHttpHeader() {
+    var header = HttpHeader();
     while (true) {
       var line = readLine();
       if (line == null || line == '') break;
-      buf.write(line + '\n');
+
+      var i = line.indexOf(':');
+      if (i > 0) header.add(line.substring(0, i), line.substring(i + 1).trim());
     }
-    return buf.toString();
+    return header;
   }
 
-  String readHttpBody([String header]) {
+  String readHttpBody([HttpHeader header]) {
     var buf = BytesBuilder();
 
     void readBuf(int len) {
@@ -79,10 +81,12 @@ class SyncSocket {
       }
     }
 
-    if (header == null || header.isEmpty) {
+    if (header == null) {
       header = readHttpHeader();
     }
-    if (RegExp('Transfer-Encoding: chunked').hasMatch(header)) {
+    if (header['Transfer-Encoding']
+            ?.firstWhere((value) => value == 'chunked') !=
+        null) {
       while (true) {
         var len = int.parse(readLine(), radix: 16);
         if (len <= 0) {
@@ -93,15 +97,14 @@ class SyncSocket {
         readLine();
       }
     } else {
-      var match = RegExp(r'Content-Length: (\d+)').firstMatch(header);
-      if (match != null) {
-        var len = int.parse(match.group(1), radix: 10);
+      var length = header['Content-Length'];
+      if (length != null) {
+        var len = int.parse(length[0], radix: 10);
         readBuf(len);
       } else {
         throw UnsupportedError('Unsupported transfer mode');
       }
     }
-    print(buf.length);
     return encoding.decode(buf.takeBytes());
   }
 
@@ -126,16 +129,34 @@ class SyncSocket {
   }
 }
 
+class HttpHeader extends SplayTreeMap<String, List<String>> {
+  List<String> operator [](Object key) => super[(key as String).toLowerCase()];
+
+  void operator []=(Object key, List<String> values) =>
+      super[(key as String).toLowerCase()] = values;
+
+  void add(String name, String value) {
+    var key = name.toLowerCase();
+    if (!containsKey(key)) {
+      super[key] = [];
+    }
+    super[key].add(value);
+  }
+}
+
 class HttpRequest {
-  SplayTreeMap<String, String> _headers = SplayTreeMap();
+  HttpHeader _header = HttpHeader();
   BytesBuilder _body = BytesBuilder();
   final Encoding encoding;
   final String method;
   final String path;
 
-  HttpRequest(this.path, {this.method = 'GET', this.encoding = utf8});
+  HttpRequest(this.path,
+      {this.method = 'GET', this.encoding = utf8, HttpHeader header}) {
+    if (header != null) _header.addAll(header);
+  }
 
-  void addHeader(String key, String value) => _headers[key] = value;
+  void addHeader(String key, String value) => _header.add(key, value);
   void addBody(String buf) {
     var bytes = encoding.encode(buf);
     _body.add(bytes);
@@ -144,11 +165,13 @@ class HttpRequest {
   List<int> toBytes() {
     var bytes = BytesBuilder();
     bytes.add(encoding.encode('$method $path  HTTP/1.1\r\n'));
-    _headers.forEach((key, value) {
-      bytes.add(encoding.encode('$key: $value\r\n'));
+    _header.forEach((key, values) {
+      values.forEach((value) {
+        bytes.add(encoding.encode('$key: $value\r\n'));
+      });
     });
     if (_body.length > 0) {
-      bytes.add(encoding.encode('Content-Length: ${_body.length}\r\n'));
+      bytes.add(encoding.encode('content-length: ${_body.length}\r\n'));
     }
     bytes.add(encoding.encode('\r\n'));
     if (_body.length > 0) {
