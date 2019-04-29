@@ -42,14 +42,18 @@ class Jsonable<T> {
         if (map.containsKey(name)) {
           var value = map[name];
           var simpleName = decl.simpleName;
-          var type = decl.type;
-          var argType =
-              type.typeArguments.isNotEmpty ? type.typeArguments.first : null;
+          TypeMirror argType;
           if (value == null) {
             inst.setField(simpleName, value);
-          } else if (value is List &&
+            return;
+          }
+          var type = decl.type;
+          if (value is List &&
               type.simpleName == #List &&
-              argType != null &&
+              (argType = type.typeArguments.isNotEmpty
+                      ? type.typeArguments.first
+                      : null) !=
+                  null &&
               argType.isSubtypeOf(reflectType(Jsonable))) {
             var listMirror = reflectType(List, [argType.reflectedType]);
             var list = (listMirror as ClassMirror).newInstance(Symbol(''), []);

@@ -1,20 +1,25 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:collection';
 
-class SyncSocketClient {
+class SyncSocket {
   RawSynchronousSocket _socket;
   final String host;
   final int port;
-  final Encoding _encoding;
+  final Encoding encoding;
 
-  SyncSocketClient(String host, int port, {Encoding encoding = utf8})
+  SyncSocket(String host, int port, {Encoding encoding = utf8})
       : this.host = host,
         this.port = port,
-        _encoding = encoding,
+        this.encoding = encoding,
         _socket = RawSynchronousSocket.connectSync(host, port);
 
-  void write(String str) {
-    _socket.writeFromSync(_encoding.encode(str));
+  void write(List<int> bytes) {
+    _socket.writeFromSync(bytes);
+  }
+
+  void writeString(String str) {
+    _socket.writeFromSync(encoding.encode(str));
   }
 
   List<int> read(int bytes) {
@@ -33,16 +38,16 @@ class SyncSocketClient {
     while (true) {
       c = readInt();
       if (c == null) {
-        return _encoding.decode(buf.takeBytes());
+        return encoding.decode(buf.takeBytes());
       } else if (c == 0xd) {
         // \r
         n = readInt();
         if (n == null) {
           buf.addByte(c);
-          return _encoding.decode(buf.takeBytes());
+          return encoding.decode(buf.takeBytes());
         } else if (n == 0xa) {
           // \n
-          return _encoding.decode(buf.takeBytes());
+          return encoding.decode(buf.takeBytes());
         } else {
           buf.addByte(c);
           buf.addByte(n);
@@ -97,7 +102,7 @@ class SyncSocketClient {
       }
     }
     print(buf.length);
-    return _encoding.decode(buf.takeBytes());
+    return encoding.decode(buf.takeBytes());
   }
 
   void close() {
@@ -116,7 +121,39 @@ class SyncSocketClient {
         "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8\n" +
         "Accept-Encoding: gzip, deflate\n" +
         "Accept-Language: zh-CN,zh;q=0.9\n\n";
-    this.write(req);
+    this.writeString(req);
     return readHttpBody();
+  }
+}
+
+class HttpRequest {
+  SplayTreeMap<String, String> _headers = SplayTreeMap();
+  BytesBuilder _body = BytesBuilder();
+  final Encoding encoding;
+  final String method;
+  final String path;
+
+  HttpRequest(this.path, {this.method = 'GET', this.encoding = utf8});
+
+  void addHeader(String key, String value) => _headers[key] = value;
+  void addBody(String buf) {
+    var bytes = encoding.encode(buf);
+    _body.add(bytes);
+  }
+
+  List<int> toBytes() {
+    var bytes = BytesBuilder();
+    bytes.add(encoding.encode('$method $path  HTTP/1.1\r\n'));
+    _headers.forEach((key, value) {
+      bytes.add(encoding.encode('$key: $value\r\n'));
+    });
+    if (_body.length > 0) {
+      bytes.add(encoding.encode('Content-Length: ${_body.length}\r\n'));
+    }
+    bytes.add(encoding.encode('\r\n'));
+    if (_body.length > 0) {
+      bytes.add(_body.takeBytes());
+    }
+    return bytes.takeBytes();
   }
 }
