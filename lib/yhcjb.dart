@@ -5,3 +5,4 @@ library yhcjb;
 
 export 'src/net/sync_socket.dart';
 export 'src/net/session.dart';
+export 'src/db/db.dart';
