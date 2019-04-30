@@ -152,10 +152,14 @@ class PageParameters extends Parameters {
 class Result<Data extends Jsonable> extends Jsonable {
   int rowcount, page, pagesize;
   String serviceid, type, vcode, message, messagedetail;
-  List<Data> datas;
+
+  @Json(name: 'datas')
+  List<Data> _datas;
+
+  List<Data> get datas => _datas != null ? _datas : [];
 
   Data operator [](int index) => datas[index];
-  int get length => datas?.length ?? 0;
+  int get length => datas.length;
 }
 
 class Syslogin extends Parameters {
@@ -200,34 +204,54 @@ class GrinfoQuery extends PageParameters {
   }
 }
 
-/// 个人综合信息
-class Grinfo extends Jsonable {
+abstract class BaseInfo {
   /// 个人编号
-  @Json(name: "aac001")
+  @Json(name: 'aac001')
   int grbh;
 
   /// 身份证号码
-  @Json(name: "aac002")
+  @Json(name: 'aac002')
   String idcard;
 
-  @Json(name: "aac003")
+  @Json(name: 'aac003')
   String name;
 
-  @Json(name: "aac006")
+  @Json(name: 'aac004')
+  String sex;
+
+  /// 民族
+  @Json(name: 'aac005')
+  String nation;
+
+  @Json(name: 'aac006')
   int birthday;
 
   /// 参保状态: "1"-正常参保 "2"-暂停参保 "4"-终止参保 "0"-未参保
-  @Json(name: "aac008")
+  @Json(name: 'aac008')
   String cbzt;
 
+  /// 户籍
+  @Json(name: 'aac009')
+  String domicile;
+
   /// 户口所在地
-  @Json(name: "aac010")
+  @Json(name: 'aac010')
   String hkszd;
 
   /// 缴费状态: "1"-参保缴费 "2"-暂停缴费 "3"-终止缴费
-  @Json(name: "aac031")
+  @Json(name: 'aac031')
   String jfzt;
 
+  /// 参保时间
+  @Json(name: 'aac049')
+  int cbrq;
+
+  /// 参保身份
+  @Json(name: 'aac066')
+  String cbsf;
+}
+
+abstract class OtherInfo {
   @Json(name: "aae005")
   String phone;
 
@@ -236,7 +260,9 @@ class Grinfo extends Jsonable {
 
   @Json(name: "aae010")
   String bankcard;
+}
 
+abstract class Xzqh {
   /// 行政区划编码
   @Json(name: "aaf101")
   String xzqh;
@@ -249,3 +275,56 @@ class Grinfo extends Jsonable {
   @Json(name: "aaf103")
   String csmc;
 }
+
+/// 业务经办审核
+abstract class Ywjbsh {
+  /// 审核状态
+  @Json(name: 'aae016')
+  String shzt;
+
+  /// 经办人
+  @Json(name: 'aae011')
+  String jbr;
+
+  /// 经办时间
+  @Json(name: 'aae036')
+  String jbsj;
+
+  /// 审核人
+  @Json(name: 'aae014')
+  String shr;
+
+  /// 审核时间
+  @Json(name: 'aae015')
+  String shsj;
+}
+
+/// 个人综合信息
+class Grinfo extends Jsonable with BaseInfo, OtherInfo, Xzqh {}
+
+class CbshQuery extends PageParameters {
+  String aaf013 = "",
+      aaf030 = "",
+      aae011 = "",
+      aae036 = "",
+      aae036s = "",
+      aae014 = "",
+      aae015s = "",
+      aac009 = "",
+      aac002 = "",
+      aac003 = "",
+      sfccb = "";
+
+  @Json(name: 'aae015')
+  String qsshsj = ""; // "2019-04-29";
+
+  @Json(name: 'aae015s')
+  String jzshsj = "";
+
+  @Json(name: 'aae016')
+  String shzt = ""; // "1";
+
+  CbshQuery({this.qsshsj, this.shzt}) : super('cbshQuery');
+}
+
+class Cbsh extends Jsonable with BaseInfo, Xzqh, Ywjbsh {}

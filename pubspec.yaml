@@ -7,8 +7,9 @@ description: A starting point for Dart libraries or applications.
 environment:
   sdk: '>=2.1.0 <3.0.0'
 
-#dependencies:
+dependencies:
 #  path: ^1.4.1
+  mysql1: ^0.17.0
 
 dev_dependencies:
   pedantic: ^1.0.0

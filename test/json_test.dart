@@ -17,7 +17,11 @@ class Education extends Jsonable {
   Education._(this.name, this.school);
 }
 
-class Employee extends IdName {
+abstract class Relations {
+  List relations = ['John', 'Peter'];
+}
+
+class Employee extends IdName with Relations {
   String position;
   double salary;
 
@@ -26,6 +30,8 @@ class Employee extends IdName {
   List<Education> educations;
 
   List records = [];
+
+  List relations = ['Joe', 'Rose'];
 }
 
 testJson() {
@@ -47,4 +53,5 @@ testJson() {
   print(emp.skills);
   emp.educations.forEach((e) => print('${e.name} ${e.school}'));
   print(emp.records);
+  print(emp.relations);
 }
