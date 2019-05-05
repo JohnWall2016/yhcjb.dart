@@ -7,3 +7,4 @@ export 'src/net/sync_socket.dart';
 export 'src/net/session.dart';
 export 'src/db/db.dart';
 export 'src/util/args.dart';
+export 'src/util/util.dart';
