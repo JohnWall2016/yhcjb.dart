@@ -56,7 +56,7 @@ class Session extends SyncSocket {
     request(serv.toJson());
   }
 
-  Result<T> getResult<T extends Jsonable>() {
+  Result<T> getResult<T extends Data>() {
     var result = readHttpBody();
     return Jsonable.fromJson<Result<T>>(result);
   }
@@ -137,10 +137,12 @@ class Parameters extends Jsonable {
 class PageParameters extends Parameters {
   final int page, pagesize;
   final List filtering = [];
-  final List sorting = [];
+  final List sorting;
   final List totals = [];
 
-  PageParameters(String id, {this.page = 1, this.pagesize = 15}) : super(id);
+  PageParameters(String id,
+      {this.page = 1, this.pagesize = 15, this.sorting = const []})
+      : super(id) {}
 
   void addFiltering(Map filtering) => this.sorting.add(filtering);
 
@@ -149,16 +151,18 @@ class PageParameters extends Parameters {
   void addTotals(Map totals) => this.totals.add(totals);
 }
 
-class Result<Data extends Jsonable> extends Jsonable {
+class Data extends Jsonable {}
+
+class Result<T extends Data> extends Jsonable {
   int rowcount, page, pagesize;
   String serviceid, type, vcode, message, messagedetail;
 
   @Json(name: 'datas')
-  List<Data> _datas;
+  List<T> _datas;
 
-  List<Data> get datas => _datas != null ? _datas : [];
+  List<T> get datas => _datas != null ? _datas : [];
 
-  Data operator [](int index) => datas[index];
+  T operator [](int index) => datas[index];
   int get length => datas.length;
 }
 
@@ -300,7 +304,7 @@ abstract class Ywjbsh {
 }
 
 /// 个人综合信息
-class Grinfo extends Jsonable with BaseInfo, OtherInfo, Xzqh {}
+class Grinfo extends Data with BaseInfo, OtherInfo, Xzqh {}
 
 class CbshQuery extends PageParameters {
   String aaf013 = "",
@@ -324,7 +328,159 @@ class CbshQuery extends PageParameters {
   @Json(name: 'aae016')
   String shzt = ""; // "1";
 
-  CbshQuery({this.qsshsj, this.shzt}) : super('cbshQuery');
+  CbshQuery({this.qsshsj = '', this.jzshsj = '', this.shzt = ''})
+      : super('cbshQuery');
 }
 
-class Cbsh extends Jsonable with BaseInfo, Xzqh, Ywjbsh {}
+class Cbsh extends Data with BaseInfo, Xzqh, Ywjbsh {}
+
+class DyryQuery extends PageParameters {
+  String aaf013 = '', aaf030 = '';
+
+  /// 预算到龄日期
+  /// 2019-04-30
+  String dlny = '';
+
+  /// 预算后待遇起始时间: '1'-到龄次月
+  String yssj = '';
+
+  String aac009 = '';
+
+  /// 是否欠费
+  String qfbz = '';
+
+  String aac002 = '';
+
+  /// 参保状态: '1'-正常参保
+  @Json(name: 'aac008')
+  String cbzt = '';
+
+  /// 是否和社保比对: '1'-是 '2'-否
+  @Json(name: 'sb_type')
+  String sbbd = '';
+
+  DyryQuery({this.dlny, this.yssj = '1', this.cbzt = '1', this.sbbd = '1'})
+      : super('dyryQuery', page: 1, pagesize: 500, sorting: [
+          {"dataKey": "xzqh", "sortDirection": "ascending"}
+        ]);
+}
+
+class Dyry extends Data {
+  @Json(name: 'xm')
+  String name;
+
+  @Json(name: 'sfz')
+  String idcard;
+
+  @Json(name: 'csrq')
+  int birthDay;
+
+  @Json(name: 'rycbzt')
+  String cbzt;
+
+  @Json(name: 'aac031')
+  String jfzt;
+
+  /// 企保参保
+  @Json(name: 'qysb_type')
+  String qbzt;
+
+  /// 共缴年限
+  String gjnx;
+
+  /// 待遇领取年月
+  String lqny;
+
+  /// 备注
+  String bz;
+
+  /// 行政区划
+  String xzqh;
+
+  /// 性别
+  String xb;
+
+  /// 居保状态
+  String get jbzt => _jbzt(cbzt, jfzt);
+
+  String get sex => _sex(xb);
+
+  String aac009;
+
+  /// 户籍性质
+  String get hjxz => _hjxz(aac009);
+
+  /// 应缴年限
+  int get yjnx {
+    var birthDay = '${this.birthDay}';
+    var year = int.parse(birthDay.substring(0, 4));
+    var month = int.parse(birthDay.substring(4, 6));
+    year = year - 1951;
+    if (year >= 15) return 15;
+    else if (year < 0) return 0;
+    else if (year == 0) {
+      if (month >= 7) return 1;
+      return 0;
+    } else return year;
+  }
+
+  /// 实缴年限
+  int get sjnx => int.parse(gjnx);
+}
+
+String _jbzt(String cbzt, String jfzt) {
+  switch (jfzt) {
+    case '3':
+      switch (cbzt) {
+        case '1':
+          return '正常待遇人员';
+        case '2':
+          return '暂停待遇人员';
+        case '4':
+          return '终止参保人员';
+        default:
+          return '其他终止缴费人员';
+      }
+      break;
+    case '1':
+      switch (cbzt) {
+        case '1':
+          return '正常缴费人员';
+        default:
+          return '其他参保缴费人员';
+      }
+      break;
+    case '2':
+      switch (cbzt) {
+        case '2':
+          return '暂停缴费人员';
+        default:
+          return '其他暂停缴费人员';
+      }
+      break;
+    default:
+      return '其他未知类型人员';
+  }
+}
+
+String _sex(String xb) {
+  switch (xb) {
+    case '1':
+      return '男';
+    case '2':
+      return '女';
+    default:
+      return '未知性别';
+  }
+}
+
+String _hjxz(String code) {
+  switch (code) {
+    case '20':
+      return '农村户籍';
+    case '10':
+      return '城市户籍';
+    default:
+      return '未知户籍';
+  }
+}

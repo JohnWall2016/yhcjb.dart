@@ -3,24 +3,31 @@ import 'package:xlsx_decoder/xlsx_decoder.dart' as xlsx;
 import 'package:path/path.dart' as p;
 
 const jbsfMap = {
-    '贫困人口一级': '051',
-    '特困一级':    '031',
-    '低保对象一级': '061',
-    '低保对象二级': '062',
-    '残一级':      '021',
-    '残二级':      '022'
+  '贫困人口一级': '051',
+  '特困一级': '031',
+  '低保对象一级': '061',
+  '低保对象二级': '062',
+  '残一级': '021',
+  '残二级': '022'
 };
 
 main(List<String> args) async {
   String dir = r'D:\精准扶贫\';
   String template = '批量信息变更模板.xlsx';
 
+  if (args.isEmpty) {
+    print(r'usage:   dart bin\jb_cbsh.dart 开始审核时间 [结束审核时间]');
+    print(r'example: dart bin\jb_cbsh.dart 2019-04-29 2019-05-05');
+    return;
+  }
+
+  String jsshsj = args.length > 1 ? args[1] : null;
   String qsshsj = args[0]; // '2019-04-29';
-  print(qsshsj);
+  print('$qsshsj${jsshsj != null ? ' ' + jsshsj : ''}');
 
   Result<Cbsh> result;
   Session.use((session) {
-    session.sendService(CbshQuery(qsshsj: qsshsj, shzt: '1'));
+    session.sendService(CbshQuery(qsshsj: qsshsj, jzshsj: jsshsj, shzt: '1'));
     result = session.getResult<Cbsh>();
   });
 
@@ -48,11 +55,12 @@ main(List<String> args) async {
         xrow.cell('C').setValue(cbsh.name);
         xrow.cell('H').setValue(jbsfMap[row[2]]);
 
-        index ++;
+        index++;
       }
 
       await conn.close();
     }
-    workbook.toFile(p.join(dir, '批量信息变更模板'+qsshsj+'.xlsx'));
+    workbook.toFile(p.join(dir,
+        '批量信息变更模板' + qsshsj + (jsshsj != null ? '_' + jsshsj : '') + '.xlsx'));
   }
 }
