@@ -21,7 +21,7 @@ Future<Database> getFpDatabase() async {
 }
 
 /// 扶贫历史数据
-class FpHistoryData {
+class FpRawData {
   @Field(name: '序号')
   int no;
 
@@ -51,6 +51,48 @@ class FpHistoryData {
 
   @Field(name: '数据月份')
   String date;
+
+  toFpData() {
+    var fpdata = FpData()
+      ..xzj = xzj
+      ..csq = csq
+      ..address = address
+      ..name = name
+      ..idcard = idcard
+      ..birthDay = birthDay;
+    switch(type) {
+      case '贫困人口':
+        fpdata
+          ..pkrk = detail
+          ..pkrkDate = date;
+        break;
+      case '特困人员':
+        fpdata
+          ..tkry = detail
+          ..tkryDate = date;
+        break;
+      case '全额低保人员':
+        fpdata
+          ..qedb = detail
+          ..qedbDate = date;
+        break;
+      case '差额低保人员':
+        fpdata
+          ..cedb = detail
+          ..cedbDate = date;
+        break;
+      case '一二级残疾人员':
+        fpdata
+          ..yejc = detail
+          ..yejcDate = date;
+        break;
+      case '三四级残疾人员':
+        fpdata
+          ..ssjc = detail
+          ..ssjcDate = date;
+        break;
+    }
+  }
 }
 
 /// 扶贫数据

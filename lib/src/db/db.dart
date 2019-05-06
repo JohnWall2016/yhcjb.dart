@@ -263,6 +263,20 @@ class Model<T> {
     if (!ifNotExists) await _db.query(dropTableSql());
     return await _db.query(createTableSql(ifNotExists: ifNotExists));
   }
+
+  static void unionTo<T>(T from, T to) {
+    var fromInst = reflect(from), toInst = reflect(to);
+    var type = reflectClass(T);
+    type.declarations.values.forEach((mirror) {
+      if (mirror is VariableMirror) {
+        var name = mirror.simpleName;
+        var value = fromInst.getField(name).reflectee;
+        if (value != null && toInst.getField(name).reflectee == null) {
+          toInst.setField(name, value);
+        }
+      }
+    });
+  }
 }
 
 abstract class SqlStmt {

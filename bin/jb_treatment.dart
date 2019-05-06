@@ -3,7 +3,7 @@ import 'package:xlsx_decoder/xlsx_decoder.dart' as xlsx;
 
 main(List<String> args) {
   var runner = CommandRunner('jb_treatment', '信息核对报告表和养老金计算表生成程序')
-    ..addCommand(new Fphd());
+    ..addCommand(Fphd());
 
   runner.run(args);
 }
@@ -35,7 +35,7 @@ class Fphd extends ArgumentsCommand {
     });
 
     var db = await getFpDatabase();
-    var model = db.getModel<FpHistoryData>('2019年度扶贫办民政残联历史数据');
+    var model = db.getModel<FpRawData>('2019年度扶贫办民政残联历史数据');
     for (var data in result.datas) {
       var idcard = data.idcard;
       //var date = int.parse(idcard.substring(6, 12)) + 6000;
