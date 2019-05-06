@@ -1,28 +1,8 @@
 import 'dart:mirrors';
+import 'dart:collection';
 
 import 'package:mysql1/mysql1.dart';
 export 'package:mysql1/mysql1.dart';
-
-import './_config.dart';
-
-Future<MySqlConnection> getDbConnection() async {
-  final conn = await MySqlConnection.connect(new ConnectionSettings(
-      host: conf['host'],
-      port: conf['port'],
-      user: conf['user'],
-      password: conf['password'],
-      db: conf['db']));
-  return conn;
-}
-
-Future<Database> getFpDatabase() async {
-  return await Database.connect(
-      host: conf['host'],
-      port: conf['port'],
-      user: conf['user'],
-      password: conf['password'],
-      db: conf['db']);
-}
 
 class Database {
   MySqlConnection _db;
@@ -55,39 +35,13 @@ class Database {
 class Field {
   final String name;
   final bool primaryKey;
-  const Field({this.name, this.primaryKey = false});
-}
-
-class FpHistoryData {
-  @Field(name: '序号')
-  int no;
-
-  @Field(name: '乡镇街')
-  String xzj;
-
-  @Field(name: '村社区')
-  String csq;
-
-  @Field(name: '地址')
-  String address;
-
-  @Field(name: '姓名')
-  String name;
-
-  @Field(name: '身份证号码', primaryKey: true)
-  String idcard;
-
-  @Field(name: '出生日期')
-  String birthDay;
-
-  @Field(name: '人员类型')
-  String type;
-
-  @Field(name: '类型细节')
-  String detail;
-
-  @Field(name: '数据月份')
-  String date;
+  final bool autoIncrement;
+  final bool notNull;
+  const Field(
+      {this.name,
+      this.primaryKey = false,
+      this.autoIncrement = false,
+      this.notNull = false});
 }
 
 class Model<T> {
@@ -96,8 +50,9 @@ class Model<T> {
 
   Set<Symbol> _primaryKeys = Set();
 
-  Map<String, Symbol> _nameToSymbol = {};
+  SplayTreeMap<String, Symbol> _nameToSymbol = SplayTreeMap();
   Map<Symbol, String> _symbolToName = {};
+  Map<Symbol, Field> _symbolToField = {};
 
   Iterable<String> get names => _nameToSymbol.keys;
   Iterable<Symbol> get symbols => _symbolToName.keys;
@@ -117,21 +72,19 @@ class Model<T> {
   Symbol _symbol;
   Symbol get symbol => _symbol;
 
-  Iterable<List> _getSymbolAndName(
-      DeclarationMirror mirror) sync* {
+  Iterable<List> _getSymbolAndName(DeclarationMirror mirror) sync* {
     String name;
-    bool primaryKey = false;
+    Field field;
     var symbol = mirror.simpleName;
     var meta = mirror.metadata.firstWhere(
         (metaMirror) => metaMirror.reflectee is Field,
         orElse: () => null);
     if (meta != null) {
-      Field field = meta.reflectee;
-      name = field.name;
-      primaryKey = field.primaryKey;
+      field = meta.reflectee;
+      name = field?.name;
     }
     name ??= MirrorSystem.getName(symbol);
-    yield [symbol, name, primaryKey];
+    yield [symbol, name, field ?? Field()];
   }
 
   Model(this._db, String name) {
@@ -144,9 +97,8 @@ class Model<T> {
         _getSymbolAndName(decl).forEach((list) {
           _nameToSymbol[list[1]] = list[0];
           _symbolToName[list[0]] = list[1];
-          if (list[2]) {
-            _primaryKeys.add(list[0]);
-          }
+          _symbolToField[list[0]] = list[2];
+          if (list[2].primaryKey) _primaryKeys.add(list[0]);
         });
       }
     });
@@ -231,6 +183,49 @@ class Model<T> {
     return buf.toString();
   }
 
+  createSql({bool ifNotExists = true}) {
+    List<String> defineFields = [];
+    _nameToSymbol.forEach((name, symbol) {
+      var decl = _class.declarations[symbol] as VariableMirror;
+      
+      String type;
+      if (decl.runtimeType == String) {
+        type = 'varchar(255)';
+      } else if (decl.runtimeType == int) {
+        type = 'int';
+      } else if (decl.runtimeType == double) {
+        type = 'double';
+      }
+      if (type == null) return;
+
+      String defineField = '`name`';
+      defineField += ' $type';
+      
+      var field = _symbolToField[symbol];
+      if (field != null) {
+        if (field.notNull || field.primaryKey)
+          defineField += ' not null';
+        if (field.autoIncrement)
+          defineField += ' auto_increment';
+      }
+      defineFields.add(defineField);
+    });
+
+    var primaryKeys = _primaryKeys.map((symbol) => '`${_symbolToName[symbol]}`').join(',');
+    
+    var buf = StringBuffer();
+    buf.write('create table');
+    if (ifNotExists) buf.write(' if not exists ');
+    buf.write('`$name`');
+    buf.write('(');
+    buf.write(defineFields.join(', '));
+    if (primaryKeys != null)
+      buf.write(', primary key ($primaryKeys)');
+    buf.write(')');
+
+    return buf.toString();
+  }
+
   Future<Iterable<T>> select(SqlStmt condition, {int limit, int offset}) async {
     var result =
         await _db.query(selectSql(condition, limit: limit, offset: offset));
@@ -262,6 +257,8 @@ class Model<T> {
   Future update(T data, {SqlStmt condition}) async {
     return await _db.query(updateSql(data, condition: condition));
   }
+
+  Future create({bool ifNotExists = true}) async {}
 }
 
 abstract class SqlStmt {
