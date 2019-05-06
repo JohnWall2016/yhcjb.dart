@@ -60,7 +60,7 @@ class FpRawData {
       ..name = name
       ..idcard = idcard
       ..birthDay = birthDay;
-    switch(type) {
+    switch (type) {
       case '贫困人口':
         fpdata
           ..pkrk = detail
@@ -92,6 +92,11 @@ class FpRawData {
           ..ssjcDate = date;
         break;
     }
+  }
+
+  @override
+  String toString() {
+    return '$idcard $name $xzj $csq $birthDay $type $detail $date';
   }
 }
 
