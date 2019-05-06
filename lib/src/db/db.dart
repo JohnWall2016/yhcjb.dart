@@ -192,10 +192,9 @@ class Model<T> {
       ..write('update ')
       ..write(name)
       ..write(' set ')
-      ..write(setFields.join(','));
-    if (condition != null) {
-      buf..write(' where ')..write(condition.toSql(this));
-    }
+      ..write(setFields.join(','))
+      ..write(' where ')..write(condition.toSql(this));
+    
     return buf.toString();
   }
 
