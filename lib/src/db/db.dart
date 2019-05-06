@@ -1,5 +1,4 @@
 import 'dart:mirrors';
-import 'dart:collection';
 
 import 'package:mysql1/mysql1.dart';
 export 'package:mysql1/mysql1.dart';
@@ -67,7 +66,6 @@ class Model<T> {
 
   String _name;
   String get name => _name;
-  set name(String value) => _name = value;
 
   Symbol _symbol;
   Symbol get symbol => _symbol;
@@ -84,7 +82,7 @@ class Model<T> {
       name = field?.name;
     }
     name ??= MirrorSystem.getName(symbol);
-    yield [symbol, name, field ?? Field()];
+    yield [symbol, name, field];
   }
 
   Model(this._db, String name) {
