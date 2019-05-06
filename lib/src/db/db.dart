@@ -264,7 +264,8 @@ class Model<T> {
     return await _db.query(createTableSql(ifNotExists: ifNotExists));
   }
 
-  static void unionTo<T>(T from, T to) {
+  static bool unionTo<T>(T from, T to) {
+    var changed = false;
     var fromInst = reflect(from), toInst = reflect(to);
     var type = reflectClass(T);
     type.declarations.values.forEach((mirror) {
@@ -273,9 +274,11 @@ class Model<T> {
         var value = fromInst.getField(name).reflectee;
         if (value != null && toInst.getField(name).reflectee == null) {
           toInst.setField(name, value);
+          changed = true;
         }
       }
     });
+    return changed;
   }
 }
 
