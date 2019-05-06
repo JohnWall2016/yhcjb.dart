@@ -23,13 +23,18 @@ main() async {
     ..name = '刘德华'
     ..idcard = '123456'));*/
 
-  var db = await getFpDatabase();
+  /*var db = await getFpDatabase();
   var model = db.getModel<FpHistoryData>('2019年度扶贫办民政残联历史数据');
   var records = await model.select(/*Eq(#type, '特困人员')*/null);
   var index = 1;
   for (var data in records) {
     print('${index++} ${data.idcard} ${data.name}');
   }
-  print(await model.count(/*Eq(#type, '特困人员')*/null));
+  print(await model.count(/*Eq(#type, '特困人员')*/null));*/
+
+  var db = await getFpDatabase();
+  var model = db.getModel<FpData>('201904扶贫数据底册');
+  print(model.createTableSql(ifNotExists: false));
+  await model.createTable(ifNotExists: false);
   await db.close();
 }

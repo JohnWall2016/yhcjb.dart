@@ -50,7 +50,7 @@ class Model<T> {
 
   Set<Symbol> _primaryKeys = Set();
 
-  SplayTreeMap<String, Symbol> _nameToSymbol = SplayTreeMap();
+  Map<String, Symbol> _nameToSymbol = {};
   Map<Symbol, String> _symbolToName = {};
   Map<Symbol, Field> _symbolToField = {};
 
@@ -183,22 +183,26 @@ class Model<T> {
     return buf.toString();
   }
 
-  createSql({bool ifNotExists = true}) {
+  dropTableSql() {
+    return 'drop table `$name`';
+  }
+
+  createTableSql({bool ifNotExists = true}) {
     List<String> defineFields = [];
     _nameToSymbol.forEach((name, symbol) {
       var decl = _class.declarations[symbol] as VariableMirror;
 
       String type;
-      if (decl.runtimeType == String) {
+      if (decl.type.isSubtypeOf(reflectType(String))) {
         type = 'varchar(255)';
-      } else if (decl.runtimeType == int) {
+      } else if (decl.type.isSubtypeOf(reflectType(int))) {
         type = 'int';
-      } else if (decl.runtimeType == double) {
+      } else if (decl.type.isSubtypeOf(reflectType(double))) {
         type = 'double';
       }
       if (type == null) return;
 
-      String defineField = '`name`';
+      String defineField = '`$name`';
       defineField += ' $type';
 
       var field = _symbolToField[symbol];
@@ -215,10 +219,11 @@ class Model<T> {
     var buf = StringBuffer();
     buf.write('create table');
     if (ifNotExists) buf.write(' if not exists ');
-    buf.write('`$name`');
+    buf.write('`$name` ');
     buf.write('(');
     buf.write(defineFields.join(', '));
-    if (primaryKeys != null) buf.write(', primary key ($primaryKeys)');
+    if (primaryKeys != null && primaryKeys.isNotEmpty)
+      buf.write(', primary key ($primaryKeys)');
     buf.write(')');
 
     return buf.toString();
@@ -256,7 +261,10 @@ class Model<T> {
     return await _db.query(updateSql(data, condition: condition));
   }
 
-  Future create({bool ifNotExists = true}) async {}
+  Future createTable({bool ifNotExists = true}) async {
+    if (!ifNotExists) await _db.query(dropTableSql());
+    return await _db.query(createTableSql(ifNotExists: ifNotExists));
+  }
 }
 
 abstract class SqlStmt {

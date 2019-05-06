@@ -70,7 +70,7 @@ class FpData {
   @Field(name: '姓名')
   String name;
 
-  @Field(name: '身份证号码')
+  @Field(name: '身份证号码', primaryKey: true)
   String idcard;
 
   @Field(name: '出生日期')
