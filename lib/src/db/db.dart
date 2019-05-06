@@ -187,7 +187,7 @@ class Model<T> {
     List<String> defineFields = [];
     _nameToSymbol.forEach((name, symbol) {
       var decl = _class.declarations[symbol] as VariableMirror;
-      
+
       String type;
       if (decl.runtimeType == String) {
         type = 'varchar(255)';
@@ -200,27 +200,25 @@ class Model<T> {
 
       String defineField = '`name`';
       defineField += ' $type';
-      
+
       var field = _symbolToField[symbol];
       if (field != null) {
-        if (field.notNull || field.primaryKey)
-          defineField += ' not null';
-        if (field.autoIncrement)
-          defineField += ' auto_increment';
+        if (field.notNull || field.primaryKey) defineField += ' not null';
+        if (field.autoIncrement) defineField += ' auto_increment';
       }
       defineFields.add(defineField);
     });
 
-    var primaryKeys = _primaryKeys.map((symbol) => '`${_symbolToName[symbol]}`').join(',');
-    
+    var primaryKeys =
+        _primaryKeys.map((symbol) => '`${_symbolToName[symbol]}`').join(',');
+
     var buf = StringBuffer();
     buf.write('create table');
     if (ifNotExists) buf.write(' if not exists ');
     buf.write('`$name`');
     buf.write('(');
     buf.write(defineFields.join(', '));
-    if (primaryKeys != null)
-      buf.write(', primary key ($primaryKeys)');
+    if (primaryKeys != null) buf.write(', primary key ($primaryKeys)');
     buf.write(')');
 
     return buf.toString();
