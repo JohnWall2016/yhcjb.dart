@@ -34,26 +34,24 @@ class Fphd extends ArgumentsCommand {
       result = session.getResult();
     });
 
-    var db = await getDbConnection();
+    var db = await getFpDatabase();
+    var model = db.getModel<FpHistoryData>();
     for (var data in result.datas) {
       var idcard = data.idcard;
       //var date = int.parse(idcard.substring(6, 12)) + 6000;
 
-      var dbResult = await db.query(
-          'select 姓名, 人员类型 from 2019年度扶贫办民政残联历史数据 '
-          'where 身份证号码 = ? and '
-          '     (人员类型 = \'贫困人口\' or '
-          '      人员类型 = \'特困人员\' or '
-          '      人员类型 = \'全额低保人员\' or '
-          '      人员类型 = \'差额低保人员\')'
-          /*'  and 数据月份 >= ?'*/,
-          [idcard/*, date.toString()*/]);
-
-      if (dbResult.isNotEmpty) {
+      var records = await model.select(And([
+        Eq(#idcard, idcard),
+        Or.Eq(#type, ['贫困人口', '特困人员', '全额低保人员', '差额低保人员']),
+        //Gte(#date, date.toString())
+      ]));
+      if (records.isNotEmpty) {
         print('${currentRow - startRow + 1} ${data.idcard} ${data.name}');
 
         var qjns = data.yjnx - data.sjnx;
         if (qjns < 0) qjns = 0;
+
+        var record = records.first;
 
         sheet.copyRowTo(startRow, currentRow++, clearValue: true)
           ..cell('A').setValue(currentRow - startRow)
@@ -63,8 +61,8 @@ class Fphd extends ArgumentsCommand {
           ..cell('E').setValue(data.birthDay)
           ..cell('F').setValue(data.sex)
           ..cell('G').setValue(data.hjxz)
-          ..cell('H').setValue(dbResult.first[0])
-          ..cell('I').setValue(dbResult.first[1])
+          ..cell('H').setValue(record.name)
+          ..cell('I').setValue(record.type)
           ..cell('J').setValue(data.jbzt)
           ..cell('K').setValue(data.lqny)
           ..cell('L').setValue(data.yjnx)

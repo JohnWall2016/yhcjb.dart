@@ -1,7 +1,7 @@
 import 'package:yhcjb/yhcjb.dart';
 
-main() {
-  var model = Model<FpHistoryData>(null);
+main() async {
+  /*var model = Model<FpHistoryData>(null);
 
   print(model.getName(#name));
   print(model.getSymbol('姓名'));
@@ -21,5 +21,15 @@ main() {
 
   print(model.updateSql(FpHistoryData()
     ..name = '刘德华'
-    ..idcard = '123456'));
+    ..idcard = '123456'));*/
+
+  var db = await getFpDatabase();
+  var model = db.getModel<FpHistoryData>();
+  var records = await model.select(/*Eq(#type, '特困人员')*/null);
+  var index = 1;
+  for (var data in records) {
+    print('${index++} ${data.idcard} ${data.name}');
+  }
+  print(await model.count(/*Eq(#type, '特困人员')*/null));
+  await db.close();
 }

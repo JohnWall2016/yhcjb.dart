@@ -16,6 +16,43 @@ Future<MySqlConnection> getDbConnection() async {
   return conn;
 }
 
+Future<Database> getFpDatabase() async {
+  return await Database.connect(
+      host: conf['host'],
+      port: conf['port'],
+      user: conf['user'],
+      password: conf['password'],
+      db: conf['db']);
+}
+
+class Database {
+  MySqlConnection _db;
+
+  Database._(this._db);
+
+  static Future<Database> connect(
+      {String host, int port, String user, String password, String db}) async {
+    return Database._(await MySqlConnection.connect(new ConnectionSettings(
+        host: host, port: port, user: user, password: password, db: db)));
+  }
+
+  Map<Type, dynamic> _models = {};
+
+  Model<T> getModel<T>() {
+    if (_models.containsValue(T))
+      return _models[T];
+    else {
+      var model = Model<T>(_db);
+      _models[T] = model;
+      return model;
+    }
+  }
+
+  Future close() async {
+    return await _db.close();
+  }
+}
+
 class Entity {
   final String name;
   const Entity(this.name);
@@ -143,6 +180,15 @@ class Model<T> {
     return buf.toString();
   }
 
+  countSql(SqlStmt condition) {
+    var buf = StringBuffer();
+    buf..write('select count(*) from ')..write(name);
+    if (condition != null) {
+      buf..write(' where ')..write(condition.toSql(this));
+    }
+    return buf.toString();
+  }
+
   deleteSql(SqlStmt condition) {
     var buf = StringBuffer();
     buf..write('delete from ')..write(name);
@@ -198,16 +244,24 @@ class Model<T> {
     return buf.toString();
   }
 
-  Stream<T> select(SqlStmt condition, {int limit, int offset}) async* {
+  Future<Iterable<T>> select(SqlStmt condition, {int limit, int offset}) async {
     var result =
         await _db.query(selectSql(condition, limit: limit, offset: offset));
-    for (var row in result) {
-      var inst = _class.newInstance(Symbol(''), []);
-      for (var entry in _nameToSymbol.entries) {
-        inst.setField(entry.value, row[entry.key]);
+
+    return (() sync* {
+      for (var row in result) {
+        var inst = _class.newInstance(Symbol(''), []);
+        for (var entry in _nameToSymbol.entries) {
+          inst.setField(entry.value, row[entry.key]);
+        }
+        yield inst.reflectee as T;
       }
-      yield inst.reflectee as T;
-    }
+    })();
+  }
+
+  Future<int> count(SqlStmt condition) async {
+    var result = await _db.query(countSql(condition));
+    return result.first[0];
   }
 
   Future delete(SqlStmt condition) async {
