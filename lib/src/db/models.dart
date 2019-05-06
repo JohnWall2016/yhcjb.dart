@@ -22,7 +22,7 @@ Future<Database> getFpDatabase() async {
 
 /// 扶贫历史数据
 class FpRawData {
-  @Field(name: '序号')
+  @Field(name: '序号', primaryKey: true, autoIncrement: true)
   int no;
 
   @Field(name: '乡镇街')

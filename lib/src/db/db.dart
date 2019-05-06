@@ -29,6 +29,10 @@ class Database {
   Future close() async {
     return await _db.close();
   }
+
+  Future execSql(String sql) async {
+    return await _db.query(sql);
+  }
 }
 
 class Field {
@@ -62,6 +66,10 @@ class Model<T> {
   String getFieldName(field) {
     if (field is Symbol) return getName(field);
     return field.toString();
+  }
+
+  String getFullFieldName(field) {
+    return '$name.${getFieldName(field)}';
   }
 
   String _name;
@@ -159,14 +167,24 @@ class Model<T> {
       if (_primaryKeys.isEmpty) {
         throw 'There isn\'t a primary key.';
       } else {
-        condition = And(_primaryKeys.map((symbol) =>
-            Eq(_symbolToName[symbol], inst.getField(symbol).reflectee)));
+        condition = And(_primaryKeys.map((symbol) {
+          var value = inst.getField(symbol).reflectee;
+          if (value == null) {
+            throw 'Primary key can\'t be null in where clause.';
+          }
+          return Eq(_symbolToName[symbol], value);
+        }));
       }
     }
     var setFields = [];
     for (var entry in _nameToSymbol.entries) {
-      var setField =
-          '${entry.key}=${SqlStmt.getValue(this, inst.getField(entry.value).reflectee)}';
+      var symbol = entry.value;
+      var value = inst.getField(symbol).reflectee;
+      if (value == null) {
+        var field = _symbolToField[symbol];
+        if (field != null && (field.primaryKey || field.notNull)) continue;
+      }
+      var setField = '${entry.key}=${SqlStmt.getValue(this, value)}';
       setFields.add(setField);
     }
     var buf = StringBuffer();

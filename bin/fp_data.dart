@@ -224,13 +224,14 @@ importFpHistoryData(Iterable<FpRawData> records) async {
   for (var record in records) {
     print('${index++} ${record.idcard} ${record.name} ${record.type}');
     if (record.idcard != null) {
-      var count = await model.count(And([
+      var where = And([
         Eq(#idcard, record.idcard),
         Eq(#type, record.type),
         Eq(#date, record.date)
-      ]));
+      ]);
+      var count = await model.count(where);
       if (count > 0)
-        await model.update(record);
+        await model.update(record, condition: where);
       else
         await model.insert(record);
     }
