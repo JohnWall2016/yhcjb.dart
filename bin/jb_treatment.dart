@@ -35,7 +35,7 @@ class Fphd extends ArgumentsCommand {
     });
 
     var db = await getFpDatabase();
-    var model = db.getModel<FpHistoryData>();
+    var model = db.getModel<FpHistoryData>('2019年度扶贫办民政残联历史数据');
     for (var data in result.datas) {
       var idcard = data.idcard;
       //var date = int.parse(idcard.substring(6, 12)) + 6000;

@@ -24,7 +24,7 @@ main() async {
     ..idcard = '123456'));*/
 
   var db = await getFpDatabase();
-  var model = db.getModel<FpHistoryData>();
+  var model = db.getModel<FpHistoryData>('2019年度扶贫办民政残联历史数据');
   var records = await model.select(/*Eq(#type, '特困人员')*/null);
   var index = 1;
   for (var data in records) {

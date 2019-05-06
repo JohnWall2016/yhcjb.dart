@@ -1,5 +1,4 @@
 import 'dart:mirrors';
-import 'dart:collection';
 
 import 'package:mysql1/mysql1.dart';
 export 'package:mysql1/mysql1.dart';
@@ -36,14 +35,14 @@ class Database {
         host: host, port: port, user: user, password: password, db: db)));
   }
 
-  Map<Type, dynamic> _models = {};
+  Map<String, dynamic> _models = {};
 
-  Model<T> getModel<T>() {
-    if (_models.containsValue(T))
-      return _models[T];
+  Model<T> getModel<T>(String name) {
+    if (_models.containsValue(name))
+      return _models[name];
     else {
-      var model = Model<T>(_db);
-      _models[T] = model;
+      var model = Model<T>(_db, name);
+      _models[name] = model;
       return model;
     }
   }
@@ -53,21 +52,12 @@ class Database {
   }
 }
 
-class Entity {
+class Field {
   final String name;
-  const Entity(this.name);
-}
-
-class Table extends Entity {
-  const Table({String name}) : super(name);
-}
-
-class Field extends Entity {
   final bool primaryKey;
-  const Field({String name, this.primaryKey = false}) : super(name);
+  const Field({this.name, this.primaryKey = false});
 }
 
-@Table(name: '2019年度扶贫办民政残联历史数据')
 class FpHistoryData {
   @Field(name: '序号')
   int no;
@@ -122,39 +112,36 @@ class Model<T> {
 
   String _name;
   String get name => _name;
+  set name(String value) => _name = value;
+
   Symbol _symbol;
   Symbol get symbol => _symbol;
 
-  Iterable<List> _getSymbolAndName<E extends Entity>(
+  Iterable<List> _getSymbolAndName(
       DeclarationMirror mirror) sync* {
     String name;
     bool primaryKey = false;
     var symbol = mirror.simpleName;
     var meta = mirror.metadata.firstWhere(
-        (metaMirror) => metaMirror.reflectee is E,
+        (metaMirror) => metaMirror.reflectee is Field,
         orElse: () => null);
     if (meta != null) {
-      E entity = meta.reflectee;
-      name = entity.name;
-      if (entity is Field) {
-        primaryKey = entity.primaryKey;
-      }
+      Field field = meta.reflectee;
+      name = field.name;
+      primaryKey = field.primaryKey;
     }
     name ??= MirrorSystem.getName(symbol);
     yield [symbol, name, primaryKey];
   }
 
-  Model(this._db) {
+  Model(this._db, String name) {
     _class = reflectType(T) as ClassMirror;
-    var iter = _getSymbolAndName<Table>(_class);
-    if (iter.isNotEmpty) {
-      var symname = iter.first;
-      _symbol = symname[0];
-      _name = symname[1];
-    }
+    _symbol = _class.simpleName;
+    _name = name ?? MirrorSystem.getName(_symbol);
+
     _class.declarations.values.forEach((decl) {
       if (decl is VariableMirror) {
-        _getSymbolAndName<Field>(decl).forEach((list) {
+        _getSymbolAndName(decl).forEach((list) {
           _nameToSymbol[list[1]] = list[0];
           _symbolToName[list[0]] = list[1];
           if (list[2]) {
