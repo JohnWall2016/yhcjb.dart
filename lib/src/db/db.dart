@@ -271,6 +271,12 @@ class Model<T> {
     })();
   }
 
+  Future<T> selectOne(SqlStmt condition) async {
+    var records = await select(condition, limit: 1);
+    if (records.isEmpty) return null;
+    return records.first;
+  }
+
   Future<int> count(SqlStmt condition) async {
     var result = await _db.query(countSql(condition));
     return result.first[0];

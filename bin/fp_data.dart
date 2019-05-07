@@ -239,6 +239,34 @@ importFpHistoryData(Iterable<FpRawData> records) async {
   await db.close();
 }
 
+mergeFpData(String tableName, Iterable<FpData> data,
+    {bool recreate = false}) async {
+  var db = await getFpDatabase();
+  var model = db.getModel<FpData>(tableName);
+
+  if (recreate) {
+    print('重新创建$tableName');
+    await model.createTable(ifNotExists: false);
+  }
+
+  print('开始合并扶贫数据至: $tableName');
+  var index = 1;
+  for (var d in data) {
+    print('${index++} ${d.idcard} ${d.name}');
+    if (d.idcard != null) {
+      var record = await model.selectOne(Eq(#idcard, d.idcard));
+      if (record == null) {
+        await model.insert(d);
+      } else {
+        if (Model.unionTo(d, record)) await model.update(record);
+      }
+    }
+  }
+  print('结束合并扶贫数据至: $tableName');
+
+  await db.close();
+}
+
 class Pkrk extends ArgumentsCommand {
   Pkrk()
       : super('pkrk',
