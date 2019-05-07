@@ -1,12 +1,17 @@
 import 'dart:mirrors';
+import 'dart:io';
 
 import 'package:mysql1/mysql1.dart';
 export 'package:mysql1/mysql1.dart';
 
-class Database {
-  MySqlConnection _db;
+import 'package:xlsx_decoder/xlsx_decoder.dart';
 
-  Database._(this._db);
+import '../util/util.dart';
+
+class Database {
+  MySqlConnection _conn;
+
+  Database._(this._conn);
 
   static Future<Database> connect(
       {String host, int port, String user, String password, String db}) async {
@@ -20,18 +25,21 @@ class Database {
     if (_models.containsValue(name))
       return _models[name];
     else {
-      var model = Model<T>(_db, name);
+      var model = Model<T>(this, name);
       _models[name] = model;
       return model;
     }
   }
 
   Future close() async {
-    return await _db.close();
+    return await _conn.close();
   }
 
+  Future<Results> query(String sql, [List<Object> values]) async =>
+      _conn.query(sql, values);
+
   Future execSql(String sql) async {
-    return await _db.query(sql);
+    return await _conn.query(sql);
   }
 }
 
@@ -48,7 +56,7 @@ class Field {
 }
 
 class Model<T> {
-  MySqlConnection _db;
+  Database _db;
   ClassMirror _class;
 
   Set<Symbol> _primaryKeys = Set();
@@ -315,6 +323,48 @@ class Model<T> {
       }
     });
     return changed;
+  }
+
+  static value<T>(T t, Symbol field) {
+    var tInst = reflect(t);
+    return tInst.getField(field).reflectee;
+  }
+
+  /// 导入xlsx
+  /// fields: ['A', 'C']
+  Future loadXlsx(
+      {String xlsx,
+      int startRow,
+      int endRow,
+      List<String> fields,
+      List<String> notQuotes = const []}) async {
+    var workbook = Workbook.fromFile(xlsx);
+    var sheet = workbook.sheetAt(0);
+    var buf = StringBuffer();
+
+    for (var index = startRow; index <= endRow; index++) {
+      var values = <String>[];
+      for (var row in fields) {
+        var value = sheet.rowAt(index).cell(row).value();
+        if (!notQuotes.contains(row)) {
+          value = "'$value'";
+        }
+        values.add(value);
+      }
+      buf.write(values.join(','));
+      buf.write('\n');
+    }
+
+    var tmpfile = File(temporaryFilePath());
+    try {
+      tmpfile.writeAsStringSync(buf.toString());
+      var loadSql = "load data infile '$tmpfile' into table `$name` "
+          "CHARACTER SET utf8 FIELDS TERMINATED BY ',' "
+          "OPTIONALLY ENCLOSED BY '\\'' LINES TERMINATED BY '\\n'";
+      return await _db.query(loadSql);
+    } finally {
+      tmpfile.deleteSync();
+    }
   }
 }
 

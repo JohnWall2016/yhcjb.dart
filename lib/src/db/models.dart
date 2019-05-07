@@ -52,7 +52,7 @@ class FpRawData {
   @Field(name: '数据月份')
   String date;
 
-  toFpData() {
+  FpData toFpData() {
     var fpdata = FpData()
       ..xzj = xzj
       ..csq = csq
@@ -92,6 +92,7 @@ class FpRawData {
           ..ssjcDate = date;
         break;
     }
+    return fpdata;
   }
 
   @override
@@ -176,4 +177,37 @@ class FpData {
 
   @Field(name: '居保参保情况日期')
   String jbcbqkDate;
+}
+
+/// 居保参保人员明细表
+class Jbrymx {
+  @Field(name: '行政区划')
+  String xzqh;
+
+  @Field(name: '户籍性质')
+  String hjxz;
+
+  @Field(name: '姓名')
+  String name;
+
+  @Field(name: '身份证号码', primaryKey: true)
+  String idcard;
+
+  @Field(name: '性别')
+  String sex;
+
+  @Field(name: '出生日期')
+  String birthDay;
+
+  @Field(name: '参保身份')
+  String cbsf;
+
+  @Field(name: '参保状态')
+  String cbzt;
+
+  @Field(name: '缴费状态')
+  String jfzt;
+
+  @Field(name: '参保时间')
+  String cbsj;
 }

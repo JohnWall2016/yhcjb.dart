@@ -8,6 +8,8 @@ main(List<String> args) {
     ..addCommand(Csdb())
     ..addCommand(Ncdb())
     ..addCommand(Cjry())
+    ..addCommand(Scdc())
+    ..addCommand(Rdsf())
     ..run(args);
 }
 
@@ -239,7 +241,30 @@ importFpHistoryData(Iterable<FpRawData> records) async {
   await db.close();
 }
 
-mergeFpData(String tableName, Iterable<FpData> data,
+const rylx = {
+  'pkry': ['贫困人口', '特困人员', '全额低保人员', '差额低保人员'],
+  'cjry': ['一二级残疾人员', '三四级残疾人员']
+};
+
+Stream<FpData> fetchFpData(String date, [bool onlyPkry = false]) async* {
+  var db = await getFpDatabase();
+  var model = db.getModel<FpRawData>('2019年度扶贫办民政残联历史数据');
+
+  var types = onlyPkry ? rylx['pkry'] : rylx.values.expand((list) => list);
+
+  for (var type in types) {
+    print('开始获取并转换: $type');
+    var records = await model.select(And([Eq(#type, type), Eq(#date, date)]));
+    for (var record in records) {
+      yield record.toFpData();
+    }
+    print('结束获取并转换: $type');
+  }
+
+  await db.close();
+}
+
+mergeFpData(String tableName, Stream<FpData> data,
     {bool recreate = false}) async {
   var db = await getFpDatabase();
   var model = db.getModel<FpData>(tableName);
@@ -251,7 +276,7 @@ mergeFpData(String tableName, Iterable<FpData> data,
 
   print('开始合并扶贫数据至: $tableName');
   var index = 1;
-  for (var d in data) {
+  await for (var d in data) {
     print('${index++} ${d.idcard} ${d.name}');
     if (d.idcard != null) {
       var record = await model.selectOne(Eq(#idcard, d.idcard));
@@ -263,6 +288,43 @@ mergeFpData(String tableName, Iterable<FpData> data,
     }
   }
   print('结束合并扶贫数据至: $tableName');
+
+  await db.close();
+}
+
+affirmIndentity(String tableName, String date, {SqlStmt condition}) async {
+  var db = await getFpDatabase();
+  var model = db.getModel<FpData>(tableName);
+
+  print('开始认定参保人员身份: $tableName');
+
+  var data = await model.select(condition);
+  var i = 1;
+  for (var d in data) {
+    String jbrdsf;
+    if (d.pkrk != null) jbrdsf = '贫困人口一级';
+    else if (d.tkry != null) jbrdsf = '特困一级';
+    else if (d.qedb != null) jbrdsf = '低保对象一级';
+    else if (d.yejc != null) jbrdsf = '残一级';
+    else if (d.cedb != null) jbrdsf = '低保对象二级';
+    else if (d.ssjc != null) jbrdsf = '残二级';
+
+    if (jbrdsf != null && d.jbrdsf != jbrdsf) {
+      if (d.jbrdsf != null) { // hoist level
+        print('${i++} ${d.idcard} ${d.name} $jbrdsf <= ${d.jbrdsf}');
+        d.jbrdsf = jbrdsf;
+        d.jbrdsfLastDate = date;
+        await model.update(d);
+      } else { // newly affirm
+        print('${i++} ${d.idcard} ${d.name} $jbrdsf');
+        d.jbrdsf = jbrdsf;
+        d.jbrdsfFirstDate = date;
+        await model.update(d);
+      }
+    }
+  }
+
+  print('结束认定参保人员身份: $tableName');
 
   await db.close();
 }
@@ -339,5 +401,22 @@ class Cjry extends ArgumentsCommand {
         xlsx: args[1],
         beginRow: int.parse(args[2]),
         endRow: int.parse(args[3])));
+  }
+}
+
+class Scdc extends ArgumentsCommand {
+  Scdc() : super('scdc', description: '生成当月扶贫数据底册', arguments: '<date:yyyymm>');
+  @override
+  void execute(List<String> args) async {
+    var date = args[0];
+    mergeFpData('$date扶贫数据底册', fetchFpData(date, true), recreate: true);
+  }
+}
+
+class Rdsf extends ArgumentsCommand {
+  Rdsf() : super('rdsf', description: '认定居保身份', arguments: '<tabeName> <date:yyyymm>');
+  @override
+  void execute(List<String> args) async {
+    affirmIndentity(args[0], args[1]);
   }
 }
