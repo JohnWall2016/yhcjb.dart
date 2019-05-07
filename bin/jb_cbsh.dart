@@ -11,18 +11,29 @@ const jbsfMap = {
   '残二级': '022'
 };
 
+usage() {
+  print(r'usage:   dart bin\jb_cbsh.dart 开始审核时间 [结束审核时间]');
+  print(r'example: dart bin\jb_cbsh.dart 20190429 20190505');
+}
+
 main(List<String> args) async {
   String dir = r'D:\精准扶贫\';
   String template = '批量信息变更模板.xlsx';
 
   if (args.isEmpty) {
-    print(r'usage:   dart bin\jb_cbsh.dart 开始审核时间 [结束审核时间]');
-    print(r'example: dart bin\jb_cbsh.dart 2019-04-29 2019-05-05');
+    usage();
     return;
   }
 
-  String jsshsj = args.length > 1 ? args[1] : null;
-  String qsshsj = args[0]; // '2019-04-29';
+  String qsshsj, jsshsj;
+  try {
+    qsshsj = getYearMonthDay(args[0])[3];
+    if (args.length > 1) jsshsj = getYearMonthDay(args[1])[3];
+  } catch (error) {
+    usage();
+    return;
+  }
+
   print('$qsshsj${jsshsj != null ? ' ' + jsshsj : ''}');
 
   Result<Cbsh> result;

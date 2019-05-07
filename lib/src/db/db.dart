@@ -161,7 +161,7 @@ class Model<T> {
     return buf.toString();
   }
 
-  updateSql(T data, {SqlStmt condition}) {
+  updateSql(T data, {List<Symbol> updateFields, SqlStmt condition}) {
     var inst = reflect(data);
     if (condition == null) {
       if (_primaryKeys.isEmpty) {
@@ -177,7 +177,18 @@ class Model<T> {
       }
     }
     var setFields = [];
-    for (var entry in _nameToSymbol.entries) {
+    Iterable<MapEntry<String, Symbol>> entries;
+    if (updateFields != null) {
+      var entrs = <String, Symbol>{};
+      updateFields.forEach((symbol) {
+        var name = _symbolToName[symbol];
+        if (name != null) entrs[name] = symbol;
+      });
+      entries = entrs.entries;
+    } else {
+      entries = _nameToSymbol.entries;
+    }
+    for (var entry in entries) {
       var symbol = entry.value;
       var value = inst.getField(symbol).reflectee;
       if (value == null) {
@@ -193,8 +204,9 @@ class Model<T> {
       ..write(name)
       ..write(' set ')
       ..write(setFields.join(','))
-      ..write(' where ')..write(condition.toSql(this));
-    
+      ..write(' where ')
+      ..write(condition.toSql(this));
+
     return buf.toString();
   }
 
@@ -272,8 +284,9 @@ class Model<T> {
     return await _db.query(insertSql(data));
   }
 
-  Future update(T data, {SqlStmt condition}) async {
-    return await _db.query(updateSql(data, condition: condition));
+  Future update(T data, {List<Symbol> updateFields, SqlStmt condition}) async {
+    return await _db.query(
+        updateSql(data, updateFields: updateFields, condition: condition));
   }
 
   Future createTable({bool ifNotExists = true}) async {
