@@ -358,7 +358,7 @@ class Model<T> {
     var tmpfile = File(temporaryFilePath());
     try {
       tmpfile.writeAsStringSync(buf.toString());
-      var loadSql = "load data infile '$tmpfile' into table `$name` "
+      var loadSql = "load data infile '${tmpfile.path}' into table `$name` "
           "CHARACTER SET utf8 FIELDS TERMINATED BY ',' "
           "OPTIONALLY ENCLOSED BY '\\'' LINES TERMINATED BY '\\n'";
       return await _db.query(loadSql);

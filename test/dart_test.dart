@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:yhcjb/yhcjb.dart';
 
 main() {
@@ -10,8 +12,10 @@ main() {
   print(rylx.values.expand((list) => list));
   */
 
-  print(tmpDir());
+  /*print(tmpDir());
   print(randomString(6));
-  print(tmpName());
-  print(temporaryFilePath());
+  print(tmpName());*/
+  var path = temporaryFilePath();
+  print(path);
+  print(File(path).path);
 }
