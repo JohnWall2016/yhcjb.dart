@@ -8,6 +8,7 @@ main(List<String> args) {
     ..addCommand(Csdb())
     ..addCommand(Ncdb())
     ..addCommand(Cjry())
+    ..addCommand(Hbdc())
     ..addCommand(Scdc())
     ..addCommand(Rdsf())
     ..addCommand(Drjb())
@@ -273,8 +274,8 @@ mergeFpData(String tableName, Stream<FpData> data,
   var model = db.getModel<FpData>(tableName);
 
   if (recreate) {
-    print('重新创建$tableName');
-    await model.createTable(recreate: false);
+    print('重新创建 $tableName');
+    await model.createTable(recreate: recreate);
   }
 
   print('开始合并扶贫数据至: $tableName');
