@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:yhcjb/yhcjb.dart';
 import 'package:xlsx_decoder/xlsx_decoder.dart';
 
@@ -449,6 +451,50 @@ exportFpData(String tableName, String tmplXlsx, String saveXlsx, {SqlStmt condit
   print('结束导出扶贫底册: ${tableName}=>${saveXlsx}');
 
   await db.close();
+}
+
+const jbsfMap = [
+    ['贫困人口一级', '051'],
+    ['特困一级',    '031'],
+    ['低保对象一级', '061'],
+    ['低保对象二级', '062'],
+    ['残一级',      '021'],
+    ['残二级',      '022']
+];
+
+exportSfbgxx(String path) async {
+  var tmplXlsx = 'D:\\精准扶贫\\批量信息变更模板.xlsx';
+  var rowsPerXlsx = 500;
+
+  var dir = Directory(path);
+  if (!dir.existsSync()) {
+    dir.createSync();
+  } else {
+    print('目录已存在: $dir');
+    return;
+  }
+
+  var db = await getFpDatabase();
+  var fpBook = db.getModel<FpData>('2019年度扶贫历史数据底册');
+  var jbTable = db.getModel<Jbrymx>('居保参保人员明细表20190221');
+
+  print('从 ${fpBook.name} 和 ${jbTable.name} 导出指信息变更表');
+
+  for (var list in jbsfMap) {
+    var sql = '''
+    select ${jbTable[#name]} as name, ${jbTable[#idcard]} as idcard
+      from ${jbTable.name}, ${fpBook.name}
+     where ${jbTable[#idcard]}=${fpBook[#idcard]}
+       and ${fpBook[#jbrdsf]}='${list[0]}'
+       and ${jbTable[#cbsf]}<>'${list[1]}'
+       and ${jbTable[#cbzt]}='1'
+       and ${jbTable[#jfzt]}='1'
+    ''';
+    print(sql);
+
+    var data = await db.query(sql);
+    
+  }
 }
 
 class Pkrk extends ArgumentsCommand {
