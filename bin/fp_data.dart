@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:yhcjb/yhcjb.dart';
 import 'package:xlsx_decoder/xlsx_decoder.dart';
 
@@ -16,6 +17,7 @@ main(List<String> args) {
     ..addCommand(Drjb())
     ..addCommand(Jbzt())
     ..addCommand(Dcsj())
+    ..addCommand(Sfbg())
     ..run(args);
 }
 
@@ -362,8 +364,11 @@ importJbData(String xlsx, int startRow, int endRow, bool recreate) async {
 }
 
 const jbztMap = [
-  [1, 3, '正常待遇'],[2, 3, '暂停待遇'],[4, 3, '终止参保'],
-  [1, 1, '正常缴费'],[2, 2, '暂停缴费']
+  [1, 3, '正常待遇'],
+  [2, 3, '暂停待遇'],
+  [4, 3, '终止参保'],
+  [1, 1, '正常缴费'],
+  [2, 2, '暂停缴费']
 ];
 
 updateJbzt(String tableName, String date) async {
@@ -376,13 +381,13 @@ updateJbzt(String tableName, String date) async {
   for (var list in jbztMap) {
     var cbzt = list[0], jfzt = list[1], jbzt = list[2];
     var sql = '''
-    update ${fpBook.name}, ${jbTable.name}
-       set ${fpBook[#jbcbqk]}='$jbzt',
-           ${fpBook[#jbcbqkDate]}='$date'
-     where ${fpBook[#idcard]}=${jbTable[#idcard]}
-       and ${jbTable[#cbzt]}='$cbzt'
-       and ${jbTable[#jfzt]}='$jfzt'
-    ''';
+update ${fpBook.name}, ${jbTable.name}
+   set ${fpBook[#jbcbqk]}='$jbzt',
+       ${fpBook[#jbcbqkDate]}='$date'
+ where ${fpBook[#idcard]}=${jbTable[#idcard]}
+   and ${jbTable[#cbzt]}='$cbzt'
+   and ${jbTable[#jfzt]}='$jfzt'
+''';
     print(sql);
     await db.execSql(sql);
   }
@@ -420,7 +425,8 @@ const exportMap = {
   'Z': 'jbcbqkDate'
 };
 
-exportFpData(String tableName, String tmplXlsx, String saveXlsx, {SqlStmt condition}) async {
+exportFpData(String tableName, String tmplXlsx, String saveXlsx,
+    {SqlStmt condition}) async {
   var db = await getFpDatabase();
   var fpBook = db.getModel<FpData>(tableName);
 
@@ -454,15 +460,15 @@ exportFpData(String tableName, String tmplXlsx, String saveXlsx, {SqlStmt condit
 }
 
 const jbsfMap = [
-    ['贫困人口一级', '051'],
-    ['特困一级',    '031'],
-    ['低保对象一级', '061'],
-    ['低保对象二级', '062'],
-    ['残一级',      '021'],
-    ['残二级',      '022']
+  ['贫困人口一级', '051'],
+  ['特困一级', '031'],
+  ['低保对象一级', '061'],
+  ['低保对象二级', '062'],
+  ['残一级', '021'],
+  ['残二级', '022']
 ];
 
-exportSfbgxx(String path) async {
+exportChanged(String path) async {
   var tmplXlsx = 'D:\\精准扶贫\\批量信息变更模板.xlsx';
   var rowsPerXlsx = 500;
 
@@ -470,7 +476,7 @@ exportSfbgxx(String path) async {
   if (!dir.existsSync()) {
     dir.createSync();
   } else {
-    print('目录已存在: $dir');
+    print('目录已存在: $path');
     return;
   }
 
@@ -478,23 +484,54 @@ exportSfbgxx(String path) async {
   var fpBook = db.getModel<FpData>('2019年度扶贫历史数据底册');
   var jbTable = db.getModel<Jbrymx>('居保参保人员明细表20190221');
 
-  print('从 ${fpBook.name} 和 ${jbTable.name} 导出指信息变更表');
+  print('从 ${fpBook.name} 和 ${jbTable.name} 导出信息变更表');
 
   for (var list in jbsfMap) {
+    var type = list[0], code = list[1];
     var sql = '''
-    select ${jbTable[#name]} as name, ${jbTable[#idcard]} as idcard
-      from ${jbTable.name}, ${fpBook.name}
-     where ${jbTable[#idcard]}=${fpBook[#idcard]}
-       and ${fpBook[#jbrdsf]}='${list[0]}'
-       and ${jbTable[#cbsf]}<>'${list[1]}'
-       and ${jbTable[#cbzt]}='1'
-       and ${jbTable[#jfzt]}='1'
-    ''';
+select ${jbTable[#name]} as name, ${jbTable[#idcard]} as idcard
+  from ${jbTable.name}, ${fpBook.name}
+ where ${jbTable[#idcard]}=${fpBook[#idcard]}
+   and ${fpBook[#jbrdsf]}='$type'
+   and ${jbTable[#cbsf]}<>'$code'
+   and ${jbTable[#cbzt]}='1'
+   and ${jbTable[#jfzt]}='1'
+''';
     print(sql);
-
     var data = await db.query(sql);
-    
+
+    if (data.isNotEmpty) {
+      print('开始导出 $type 批量信息变更表');
+
+      int i = 0, files = 0;
+      Workbook workbook;
+      Sheet sheet;
+      int startRow = 2, currentRow = 2;
+      for (var d in data) {
+        if (i++ % rowsPerXlsx == 0) {
+          if (workbook != null) {
+            workbook.toFile(p.join(path, '${type}批量信息变更表${++files}.xlsx'));
+            workbook = null;
+          }
+          if (workbook == null) {
+            workbook = Workbook.fromFile(tmplXlsx);
+            sheet = workbook.sheetAt(0);
+            currentRow = 2;
+          }
+        }
+        var row = sheet.copyRowTo(startRow, currentRow++);
+        row.cell('A').setValue(d[1]);
+        row.cell('C').setValue(d[0]);
+        row.cell('H').setValue(code);
+      }
+      if (workbook != null)
+        workbook.toFile(p.join(path, '${type}批量信息变更表${++files}.xlsx'));
+
+      print('结束导出 $type 批量信息变更表: $i 条');
+    }
   }
+
+  await db.close();
 }
 
 class Pkrk extends ArgumentsCommand {
@@ -573,7 +610,8 @@ class Cjry extends ArgumentsCommand {
 }
 
 class Hbdc extends ArgumentsCommand {
-  Hbdc() : super('hbdc', description: '合并到扶贫历史数据底册', arguments: '<date:yyyymm>');
+  Hbdc()
+      : super('hbdc', description: '合并到扶贫历史数据底册', arguments: '<date:yyyymm>');
   @override
   void execute(List<String> args) async {
     var date = args[0];
@@ -616,8 +654,7 @@ class Drjb extends ArgumentsCommand {
 class Jbzt extends ArgumentsCommand {
   Jbzt()
       : super('jbzt',
-            description: '更新居保参保状态',
-            arguments: '<tableName> <date:yyyymmdd>');
+            description: '更新居保参保状态', arguments: '<tableName> <date:yyyymmdd>');
   @override
   void execute(List<String> args) async {
     updateJbzt(args[0], args[1]);
@@ -625,15 +662,20 @@ class Jbzt extends ArgumentsCommand {
 }
 
 class Dcsj extends ArgumentsCommand {
-  Dcsj()
-      : super('dcsj',
-            description: '导出扶贫底册数据',
-            arguments: '<tableName>');
+  Dcsj() : super('dcsj', description: '导出扶贫底册数据', arguments: '<tableName>');
   @override
   void execute(List<String> args) async {
     var tableName = args[0];
     var tmplXlsx = 'D:\\精准扶贫\\雨湖区精准扶贫底册模板.xlsx';
     var saveXlsx = 'D:\\精准扶贫\\$tableName${getFormatDate()}.xlsx';
     exportFpData(tableName, tmplXlsx, saveXlsx);
+  }
+}
+
+class Sfbg extends ArgumentsCommand {
+  Sfbg() : super('sfbg', description: '导出居保参保身份变更信息表', arguments: '<dir>');
+  @override
+  void execute(List<String> args) async {
+    exportChanged(args[0]);
   }
 }

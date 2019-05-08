@@ -19,5 +19,7 @@ main() {
   print(path);
   print(File(path).path);*/
 
-  print(getFormatDate());
+  //print(getFormatDate());
+  print(1 / 2);
+  print(1 ~/ 2);
 }
