@@ -24,10 +24,14 @@ class ArgumentsCommand extends Command {
   }
 
   void run() {
-    var params = arguments.trim().split(RegExp(r'[ \t]+')).length;
-    var args = argResults.rest.length;
-    if (params > args) {
-      print('Error: Too many arguments: $params expected, but $args got.\n');
+    var params = arguments.trim().split(RegExp(r'[ \t]+'));
+    var paramsLength = params.length;
+    if (paramsLength > 0) {
+      if (RegExp(r'^\[.*?\]$').hasMatch(params[paramsLength - 1])) paramsLength -= 1;
+    }
+    var argsLength = argResults.rest.length;
+    if (paramsLength > argsLength) {
+      print('Error: Too many arguments: $paramsLength expected, but $argsLength got.\n');
       print(usage);
       return;
     }

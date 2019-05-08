@@ -10,6 +10,7 @@ main(List<String> args) {
     ..addCommand(Cjry())
     ..addCommand(Scdc())
     ..addCommand(Rdsf())
+    ..addCommand(Drjb())
     ..run(args);
 }
 
@@ -271,7 +272,7 @@ mergeFpData(String tableName, Stream<FpData> data,
 
   if (recreate) {
     print('重新创建$tableName');
-    await model.createTable(ifNotExists: false);
+    await model.createTable(recreate: false);
   }
 
   print('开始合并扶贫数据至: $tableName');
@@ -302,20 +303,27 @@ affirmIndentity(String tableName, String date, {SqlStmt condition}) async {
   var i = 1;
   for (var d in data) {
     String jbrdsf;
-    if (d.pkrk != null) jbrdsf = '贫困人口一级';
-    else if (d.tkry != null) jbrdsf = '特困一级';
-    else if (d.qedb != null) jbrdsf = '低保对象一级';
-    else if (d.yejc != null) jbrdsf = '残一级';
-    else if (d.cedb != null) jbrdsf = '低保对象二级';
+    if (d.pkrk != null)
+      jbrdsf = '贫困人口一级';
+    else if (d.tkry != null)
+      jbrdsf = '特困一级';
+    else if (d.qedb != null)
+      jbrdsf = '低保对象一级';
+    else if (d.yejc != null)
+      jbrdsf = '残一级';
+    else if (d.cedb != null)
+      jbrdsf = '低保对象二级';
     else if (d.ssjc != null) jbrdsf = '残二级';
 
     if (jbrdsf != null && d.jbrdsf != jbrdsf) {
-      if (d.jbrdsf != null) { // hoist level
+      if (d.jbrdsf != null) {
+        // hoist level
         print('${i++} ${d.idcard} ${d.name} $jbrdsf <= ${d.jbrdsf}');
         d.jbrdsf = jbrdsf;
         d.jbrdsfLastDate = date;
         await model.update(d);
-      } else { // newly affirm
+      } else {
+        // newly affirm
         print('${i++} ${d.idcard} ${d.name} $jbrdsf');
         d.jbrdsf = jbrdsf;
         d.jbrdsfFirstDate = date;
@@ -325,6 +333,25 @@ affirmIndentity(String tableName, String date, {SqlStmt condition}) async {
   }
 
   print('结束认定参保人员身份: $tableName');
+
+  await db.close();
+}
+
+importJbData(String xlsx, int startRow, int endRow, bool recreate) async {
+  var db = await getFpDatabase();
+  var model = db.getModel<Jbrymx>('居保参保人员明细表20190221');
+
+  await model.createTable(recreate: recreate);
+
+  print('开始导入居保参保人员明细表');
+
+  await model.loadXlsx(
+      xlsx: xlsx,
+      startRow: startRow,
+      endRow: endRow,
+      fields: ['A', 'B', 'C', 'D', 'E', 'F', 'H', 'J', 'K', 'N']);
+
+  print('结束导入居保参保人员明细表');
 
   await db.close();
 }
@@ -414,9 +441,24 @@ class Scdc extends ArgumentsCommand {
 }
 
 class Rdsf extends ArgumentsCommand {
-  Rdsf() : super('rdsf', description: '认定居保身份', arguments: '<tabeName> <date:yyyymm>');
+  Rdsf()
+      : super('rdsf',
+            description: '认定居保身份', arguments: '<tabeName> <date:yyyymm>');
   @override
   void execute(List<String> args) async {
     affirmIndentity(args[0], args[1]);
+  }
+}
+
+class Drjb extends ArgumentsCommand {
+  Drjb()
+      : super('drjb',
+            description: '导入居保参保人员明细表',
+            arguments: '<xlsx> <beginRow> <endRow> [\'recreate\']');
+  @override
+  void execute(List<String> args) async {
+    var recreate = false;
+    if (args.length > 3 && args[3] == 'recreate') recreate = true;
+    importJbData(args[0], int.parse(args[1]), int.parse(args[2]), recreate);
   }
 }

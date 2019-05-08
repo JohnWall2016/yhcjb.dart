@@ -222,7 +222,7 @@ class Model<T> {
     return 'drop table `$name`';
   }
 
-  createTableSql({bool ifNotExists = true}) {
+  createTableSql() {
     List<String> defineFields = [];
     _nameToSymbol.forEach((name, symbol) {
       var decl = _class.declarations[symbol] as VariableMirror;
@@ -252,8 +252,7 @@ class Model<T> {
         _primaryKeys.map((symbol) => '`${_symbolToName[symbol]}`').join(',');
 
     var buf = StringBuffer();
-    buf.write('create table');
-    if (ifNotExists) buf.write(' if not exists ');
+    buf.write('create table if not exists ');
     buf.write('`$name` ');
     buf.write('(');
     buf.write(defineFields.join(', '));
@@ -303,9 +302,9 @@ class Model<T> {
         updateSql(data, updateFields: updateFields, condition: condition));
   }
 
-  Future createTable({bool ifNotExists = true}) async {
-    if (!ifNotExists) await _db.query(dropTableSql());
-    return await _db.query(createTableSql(ifNotExists: ifNotExists));
+  Future createTable({bool recreate = false}) async {
+    if (recreate) await _db.query(dropTableSql());
+    return await _db.query(createTableSql());
   }
 
   static bool unionTo<T>(T from, T to) {
@@ -358,7 +357,8 @@ class Model<T> {
     var tmpfile = File(temporaryFilePath());
     try {
       tmpfile.writeAsStringSync(buf.toString());
-      var loadSql = "load data infile '${tmpfile.path}' into table `$name` "
+      var loadSql =
+          "load data infile '${tmpfile.path.replaceAll('\\', '\\\\')}' into table `$name` "
           "CHARACTER SET utf8 FIELDS TERMINATED BY ',' "
           "OPTIONALLY ENCLOSED BY '\\'' LINES TERMINATED BY '\\n'";
       return await _db.query(loadSql);
