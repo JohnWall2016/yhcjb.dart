@@ -86,6 +86,8 @@ class Model<T> {
   Symbol _symbol;
   Symbol get symbol => _symbol;
 
+  String operator [](Symbol symbol) => getFullFieldName(symbol);
+
   Iterable<List> _getSymbolAndName(DeclarationMirror mirror) sync* {
     String name;
     Field field;
@@ -324,8 +326,11 @@ class Model<T> {
     return changed;
   }
 
-  static value<T>(T t, Symbol field) {
+  static value<T>(T t, field) {
     var tInst = reflect(t);
+    if (field is! Symbol) {
+      field = MirrorSystem.getSymbol(field);
+    }
     return tInst.getField(field).reflectee;
   }
 

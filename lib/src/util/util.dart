@@ -58,3 +58,10 @@ String tmpName([String prefix, String postfix]) {
 
 String temporaryFilePath([String prefix, String postfix]) =>
     p.join(tmpDir(), tmpName());
+
+String getFormatDate() {
+  var d = DateTime.now();
+  return '${d.year}' +
+      '${d.month}'.padLeft(2, '0') +
+      '${d.day}'.padLeft(2, '0');
+}

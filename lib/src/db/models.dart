@@ -63,21 +63,25 @@ class FpRawData {
     switch (type) {
       case '贫困人口':
         fpdata
+          ..sypkry = '贫困人口'
           ..pkrk = detail
           ..pkrkDate = date;
         break;
       case '特困人员':
         fpdata
+          ..sypkry = '特困人员'
           ..tkry = detail
           ..tkryDate = date;
         break;
       case '全额低保人员':
         fpdata
+          ..sypkry = '低保对象'
           ..qedb = detail
           ..qedbDate = date;
         break;
       case '差额低保人员':
         fpdata
+          ..sypkry = '低保对象'
           ..cedb = detail
           ..cedbDate = date;
         break;

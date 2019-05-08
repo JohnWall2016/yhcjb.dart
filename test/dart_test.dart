@@ -15,7 +15,9 @@ main() {
   /*print(tmpDir());
   print(randomString(6));
   print(tmpName());*/
-  var path = temporaryFilePath();
+  /*var path = temporaryFilePath();
   print(path);
-  print(File(path).path);
+  print(File(path).path);*/
+
+  print(getFormatDate());
 }

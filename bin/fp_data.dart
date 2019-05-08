@@ -11,6 +11,8 @@ main(List<String> args) {
     ..addCommand(Scdc())
     ..addCommand(Rdsf())
     ..addCommand(Drjb())
+    ..addCommand(Jbzt())
+    ..addCommand(Dcsj())
     ..run(args);
 }
 
@@ -356,6 +358,98 @@ importJbData(String xlsx, int startRow, int endRow, bool recreate) async {
   await db.close();
 }
 
+const jbztMap = [
+  [1, 3, '正常待遇'],[2, 3, '暂停待遇'],[4, 3, '终止参保'],
+  [1, 1, '正常缴费'],[2, 2, '暂停缴费']
+];
+
+updateJbzt(String tableName, String date) async {
+  var db = await getFpDatabase();
+  var fpBook = db.getModel<FpData>(tableName);
+  var jbTable = db.getModel<Jbrymx>('居保参保人员明细表20190221');
+
+  print('开始更新居保状态: $tableName');
+
+  for (var list in jbztMap) {
+    var cbzt = list[0], jfzt = list[1], jbzt = list[2];
+    var sql = '''
+    update ${fpBook.name}, ${jbTable.name}
+       set ${fpBook[#jbcbqk]}='$jbzt',
+           ${fpBook[#jbcbqkDate]}='$date'
+     where ${fpBook[#idcard]}=${jbTable[#idcard]}
+       and ${jbTable[#cbzt]}='$cbzt'
+       and ${jbTable[#jfzt]}='$jfzt'
+    ''';
+    print(sql);
+    await db.execSql(sql);
+  }
+
+  print('结束更新居保状态: $tableName');
+
+  await db.close();
+}
+
+const exportMap = {
+  'B': 'no',
+  'C': 'xzj',
+  'D': 'csq',
+  'E': 'address',
+  'F': 'name',
+  'G': 'idcard',
+  'H': 'birthDay',
+  'I': 'pkrk',
+  'J': 'pkrkDate',
+  'K': 'tkry',
+  'L': 'tkryDate',
+  'M': 'qedb',
+  'N': 'qedbDate',
+  'O': 'cedb',
+  'P': 'cedbDate',
+  'Q': 'yejc',
+  'R': 'yejcDate',
+  'S': 'ssjc',
+  'T': 'ssjcDate',
+  'U': 'sypkry',
+  'V': 'jbrdsf',
+  'W': 'jbrdsfFirstDate',
+  'X': 'jbrdsfLastDate',
+  'Y': 'jbcbqk',
+  'Z': 'jbcbqkDate'
+};
+
+exportFpData(String tableName, String tmplXlsx, String saveXlsx, {SqlStmt condition}) async {
+  var db = await getFpDatabase();
+  var fpBook = db.getModel<FpData>(tableName);
+
+  print('开始导出扶贫底册: ${tableName}=>${saveXlsx}');
+
+  var workbook = Workbook.fromFile(tmplXlsx);
+  var sheet = workbook.sheetAt(0);
+  var startRow = 3, currentRow = 3;
+
+  var data = await fpBook.select(condition);
+
+  for (var d in data) {
+    var index = currentRow - startRow + 1;
+
+    print('$index ${d.idcard} ${d.name}');
+
+    var row = sheet.copyRowTo(startRow, currentRow++, clearValue: true);
+    row.cell('A').setValue(index);
+
+    exportMap.forEach((col, field) {
+      var value = Model.value(d, field);
+      if (value != null) row.cell(col).setValue(value);
+    });
+  }
+
+  await workbook.toFile(saveXlsx);
+
+  print('结束导出扶贫底册: ${tableName}=>${saveXlsx}');
+
+  await db.close();
+}
+
 class Pkrk extends ArgumentsCommand {
   Pkrk()
       : super('pkrk',
@@ -431,6 +525,15 @@ class Cjry extends ArgumentsCommand {
   }
 }
 
+class Hbdc extends ArgumentsCommand {
+  Hbdc() : super('hbdc', description: '合并到扶贫历史数据底册', arguments: '<date:yyyymm>');
+  @override
+  void execute(List<String> args) async {
+    var date = args[0];
+    mergeFpData('2019年度扶贫历史数据底册', fetchFpData(date, false), recreate: false);
+  }
+}
+
 class Scdc extends ArgumentsCommand {
   Scdc() : super('scdc', description: '生成当月扶贫数据底册', arguments: '<date:yyyymm>');
   @override
@@ -460,5 +563,30 @@ class Drjb extends ArgumentsCommand {
     var recreate = false;
     if (args.length > 3 && args[3] == 'recreate') recreate = true;
     importJbData(args[0], int.parse(args[1]), int.parse(args[2]), recreate);
+  }
+}
+
+class Jbzt extends ArgumentsCommand {
+  Jbzt()
+      : super('jbzt',
+            description: '更新居保参保状态',
+            arguments: '<tableName> <date:yyyymmdd>');
+  @override
+  void execute(List<String> args) async {
+    updateJbzt(args[0], args[1]);
+  }
+}
+
+class Dcsj extends ArgumentsCommand {
+  Dcsj()
+      : super('dcsj',
+            description: '导出扶贫底册数据',
+            arguments: '<tableName>');
+  @override
+  void execute(List<String> args) async {
+    var tableName = args[0];
+    var tmplXlsx = 'D:\\精准扶贫\\雨湖区精准扶贫底册模板.xlsx';
+    var saveXlsx = 'D:\\精准扶贫\\$tableName${getFormatDate()}.xlsx';
+    exportFpData(tableName, tmplXlsx, saveXlsx);
   }
 }
