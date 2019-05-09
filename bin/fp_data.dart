@@ -474,7 +474,7 @@ exportChanged(String path) async {
 
   var dir = Directory(path);
   if (!dir.existsSync()) {
-    dir.createSync();
+    dir.createSync(recursive: true);
   } else {
     print('目录已存在: $path');
     return;
@@ -488,6 +488,7 @@ exportChanged(String path) async {
 
   for (var list in jbsfMap) {
     var type = list[0], code = list[1];
+    
     var sql = '''
 select ${jbTable[#name]} as name, ${jbTable[#idcard]} as idcard
   from ${jbTable.name}, ${fpBook.name}
@@ -497,7 +498,8 @@ select ${jbTable[#name]} as name, ${jbTable[#idcard]} as idcard
    and ${jbTable[#cbzt]}='1'
    and ${jbTable[#jfzt]}='1'
 ''';
-    print(sql);
+    print(sql + '\n');
+
     var data = await db.query(sql);
 
     if (data.isNotEmpty) {
