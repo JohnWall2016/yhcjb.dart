@@ -20,6 +20,12 @@ main() {
   print(File(path).path);*/
 
   //print(getFormatDate());
-  print(1 / 2);
-  print(1 ~/ 2);
+  /*print(1 / 2);
+  print(1 ~/ 2);*/
+
+  var man = ['John', 'Peter'];
+  var people = ['Rose', ...man];
+  print(people);
+
+  print(Platform.localeName);
 }
