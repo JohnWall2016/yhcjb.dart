@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yhcjb/yhcjb.dart';
 import 'package:xlsx_decoder/xlsx_decoder.dart';
+import 'package:args/command_runner.dart';
+import 'package:args/arguments_command.dart';
 
 main(List<String> args) {
   CommandRunner('fp_data', '扶贫数据导库比对程序')
