@@ -42,6 +42,7 @@ main(List<String> args) async {
     result = session.getResult<Cbsh>();
   });
 
+  var export = false;
   if (result.length > 0) {
     var workbook = xlsx.Workbook.fromFile(p.join(dir, template));
     var sheet = workbook.sheetAt(0);
@@ -56,6 +57,7 @@ main(List<String> args) async {
           [cbsh.idcard]);
       for (var row in results) {
         print(row);
+        export = true;
 
         xlsx.Row xrow;
         if (index == copyIndex)
@@ -71,7 +73,12 @@ main(List<String> args) async {
 
       await conn.close();
     }
-    workbook.toFile(p.join(dir,
-        '批量信息变更模板' + qsshsj + (jsshsj != null ? '_' + jsshsj : '') + '.xlsx'));
+    if (export)
+      workbook.toFile(p.join(
+          dir,
+          '批量信息变更模板' +
+              qsshsj +
+              (jsshsj != null ? '_' + jsshsj : '') +
+              '.xlsx'));
   }
 }
