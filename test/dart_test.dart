@@ -29,3 +29,15 @@ main() {
 
   print(Platform.localeName);
 }
+
+class M1 {
+  num field;
+}
+
+class M2 {
+  num field;
+}
+
+class C with M1, M2 {
+
+}

@@ -25,7 +25,7 @@ class Database {
     if (_models.containsValue(name))
       return _models[name];
     else {
-      var model = Model<T>(this, name);
+      var model = Model<T>._(this, name);
       _models[name] = model;
       return model;
     }
@@ -57,6 +57,11 @@ class Field {
 
 class Model<T> {
   Database _db;
+
+  Future close() async {
+    return await _db?.close();
+  }
+
   ClassMirror _class;
 
   Set<Symbol> _primaryKeys = Set();
@@ -103,7 +108,7 @@ class Model<T> {
     yield [symbol, name, field];
   }
 
-  Model(this._db, String name) {
+  Model._(this._db, String name) {
     _class = reflectType(T) as ClassMirror;
     _symbol = _class.simpleName;
     _name = name ?? MirrorSystem.getName(_symbol);
@@ -118,6 +123,10 @@ class Model<T> {
         });
       }
     });
+  }
+
+  static Model<T> createModel<T>(Database db, String name) {
+    return db.getModel<T>(name);
   }
 
   selectSql(SqlStmt condition, {int limit, int offset}) {

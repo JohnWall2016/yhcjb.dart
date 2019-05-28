@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import './sync_socket.dart';
 import '../json/json.dart';
 export '../json/json.dart';
@@ -142,7 +144,7 @@ class PageParameters extends Parameters {
 
   PageParameters(String id,
       {this.page = 1, this.pagesize = 15, this.sorting = const []})
-      : super(id) {}
+      : super(id);
 
   void addFiltering(Map filtering) => this.sorting.add(filtering);
 
@@ -164,6 +166,9 @@ class Result<T extends Data> extends Jsonable {
 
   T operator [](int index) => datas[index];
   int get length => datas.length;
+
+  bool get isEmpty => datas.isEmpty;
+  bool get isNotEmpty => !isEmpty;
 }
 
 class Syslogin extends Parameters {
@@ -416,12 +421,15 @@ class Dyry extends Data {
     var year = int.parse(birthDay.substring(0, 4));
     var month = int.parse(birthDay.substring(4, 6));
     year = year - 1951;
-    if (year >= 15) return 15;
-    else if (year < 0) return 0;
+    if (year >= 15)
+      return 15;
+    else if (year < 0)
+      return 0;
     else if (year == 0) {
       if (month >= 7) return 1;
       return 0;
-    } else return year;
+    } else
+      return year;
   }
 
   /// 实缴年限
@@ -483,4 +491,83 @@ String _hjxz(String code) {
     default:
       return '未知户籍';
   }
+}
+
+class DyfhQuery extends PageParameters {
+  String aaf013 = '', aaf030 = '';
+
+  @Json(name: 'aae016')
+  String shzt = '';
+
+  String aae011 = '', aae036 = '', aae036s = '';
+  String aae014 = '', aae015 = '', aae015s = '';
+
+  @Json(name: 'aae015')
+  String qsshsj = '';
+
+  @Json(name: 'aae015s')
+  String jzshsj = '';
+
+  String aac009 = '', aac003 = '';
+
+  @Json(name: 'aac002')
+  String idcard = '';
+
+  DyfhQuery(
+      {this.idcard = '',
+      this.shzt = '0',
+      this.qsshsj = '',
+      this.jzshsj = '',
+      int page = 1,
+      int pagesize = 500,
+      List sorting = const [
+        {"dataKey": "aaa027", "sortDirection": "ascending"}
+      ]})
+      : super('dyfhQuery', page: page, pagesize: pagesize, sorting: sorting);
+}
+
+class Dyfh extends Data with BaseInfo {
+  /// 实际待遇开始月份
+  @Json(name: 'aic160')
+  int payMonth;
+
+  /// 到龄日期
+  @Json(name: 'aic162')
+  int retireDate;
+
+  /// 月养老金
+  @Json(name: 'aic166')
+  double payAmount;
+
+  /// 财务月份
+  @Json(name: 'aae211')
+  int accountMonth;
+
+  /// 行政区划
+  @Json(name: 'aaa027')
+  String xzqh;
+
+  /// 单位名称
+  @Json(name: 'aaa129')
+  String dwmc;
+
+  int aaz170, aaz159, aaz157;
+
+  get paymentInfo {
+    var escape = (data) {
+      return htmlEscape.convert('$data');
+    };
+    var path = '/hncjb/reports?method=htmlcontent&name=yljjs&'
+      'aaz170=${escape(aaz170)}&aaz159=${escape(aaz159)}&aac001=${escape(grbh)}&'
+      'aaz157=${escape(aaz157)}&aaa129=${escape(dwmc)}&aae211=${escape(accountMonth)}';
+    var sock = SyncSocket(conf['host'], conf['port']);
+    try {
+      var content = sock.getHttp(path);
+      return RegExp(regexPaymentInfo).firstMatch(content);
+    } finally {
+      sock.close();
+    }
+  }
+
+  String bz = '', fpName = '', fpType = '';
 }
