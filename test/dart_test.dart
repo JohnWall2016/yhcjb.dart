@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:yhcjb/yhcjb.dart';
+import 'package:intl/intl.dart';
 
 main() {
   /*
@@ -28,6 +29,8 @@ main() {
   print(people);
 
   print(Platform.localeName);
+
+  print(DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()));
 }
 
 class M1 {

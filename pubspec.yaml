@@ -13,6 +13,7 @@ dependencies:
   xlsx_decoder:
     path: ../xlsx_decoder
   args: ^1.4.0
+  intl: ^0.15.8
 
 dev_dependencies:
   pedantic: ^1.0.0

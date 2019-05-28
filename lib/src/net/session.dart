@@ -558,8 +558,8 @@ class Dyfh extends Data with BaseInfo {
       return htmlEscape.convert('$data');
     };
     var path = '/hncjb/reports?method=htmlcontent&name=yljjs&'
-      'aaz170=${escape(aaz170)}&aaz159=${escape(aaz159)}&aac001=${escape(grbh)}&'
-      'aaz157=${escape(aaz157)}&aaa129=${escape(dwmc)}&aae211=${escape(accountMonth)}';
+        'aaz170=${escape(aaz170)}&aaz159=${escape(aaz159)}&aac001=${escape(grbh)}&'
+        'aaz157=${escape(aaz157)}&aaa129=${escape(dwmc)}&aae211=${escape(accountMonth)}';
     var sock = SyncSocket(conf['host'], conf['port']);
     try {
       var content = sock.getHttp(path);
@@ -570,4 +570,38 @@ class Dyfh extends Data with BaseInfo {
   }
 
   String bz = '', fpName = '', fpType = '';
+}
+
+class BankInfoQuery extends Parameters {
+  /// 身份证号码
+  @Json(name: "aac002")
+  String idcard = "";
+
+  BankInfoQuery(this.idcard) : super('executeSncbgrBankinfoConQ');
+}
+
+class BankInfo extends Data {
+  /// 银行类型
+  @Json(name: 'bie013')
+  String bankType;
+
+  /// 户名
+  @Json(name: 'aae009')
+  String name;
+
+  /// 卡号
+  @Json(name: 'aae010')
+  String cardNumber;
+
+  String get bankName => bankMap[bankType];
+
+  static const bankMap = {
+    "LY": "中国农业银行",
+    "ZG": "中国银行",
+    "JS": "中国建设银行",
+    "NH": "农村信用合作社",
+    "YZ": "邮政",
+    "JT": "交通银行",
+    "GS": "中国工商银行",
+  };
 }

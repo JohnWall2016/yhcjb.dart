@@ -2,6 +2,11 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'dart:math';
 
+stop(String message, [int code = -1]) {
+  print(message);
+  exit(code);
+}
+
 getYearMonthDay(date) {
   var ma = RegExp(r'^(\d\d\d\d)(\d\d)(\d\d)$').firstMatch(date);
   if (ma != null) {
