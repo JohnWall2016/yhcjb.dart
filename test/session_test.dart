@@ -17,7 +17,7 @@ main() {
     print(s.readHttpBody());
   });*/
 
-  Session.use((s) {
+  /*Session.use((s) {
     s.sendService(DyfhQuery(shzt: '1', qsshsj: '2019-05-15'));
     //print(s.readHttpBody());
     var result = s.getResult<Dyfh>();
@@ -27,5 +27,11 @@ main() {
       print(pinfo[1]);
       print(pinfo[2]);
     }
+  });*/
+
+  Session.use((s) {
+    //print(CwzfglQuery('201905', '1'));
+    s.sendService(CwzfglQuery('201905', '1'));
+    print(s.readHttpBody());
   });
 }

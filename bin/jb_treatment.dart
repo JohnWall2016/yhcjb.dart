@@ -1,8 +1,6 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:yhcjb/src/net/_config.dart';
-import 'package:yhcjb/src/net/session.dart';
 import 'package:yhcjb/yhcjb.dart';
 import 'package:xlsx_decoder/xlsx_decoder.dart' as xlsx;
 import 'package:args/command_runner.dart';
@@ -12,7 +10,8 @@ import 'package:intl/intl.dart';
 main(List<String> args) {
   var runner = CommandRunner('jb_treatment', '信息核对报告表和养老金计算表生成程序')
     ..addCommand(Fphd())
-    ..addCommand(Download());
+    ..addCommand(Download())
+    ..addCommand(Split());
 
   runner.run(args);
 }
@@ -323,7 +322,6 @@ class Split extends ArgumentsCommand {
         if (bankInfo.cardNumber != null) {
           var card = bankInfo.cardNumber;
           var l = card.length;
-
           var repeat = (s, t) {
             var r = '';
             for (var i = 0; i < t; i++) {

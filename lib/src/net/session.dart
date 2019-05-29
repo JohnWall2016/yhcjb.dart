@@ -137,13 +137,21 @@ class Parameters extends Jsonable {
 }
 
 class PageParameters extends Parameters {
-  final int page, pagesize;
-  final List filtering = [];
+  final int page;
+
+  @Json(name: 'pagesize')
+  final int pageSize;
+
+  final List filtering;
   final List sorting;
-  final List totals = [];
+  final List totals;
 
   PageParameters(String id,
-      {this.page = 1, this.pagesize = 15, this.sorting = const []})
+      {this.page = 1,
+      this.pageSize = 15,
+      this.filtering = const [],
+      this.sorting = const [],
+      this.totals = const []})
       : super(id);
 
   void addFiltering(Map filtering) => this.sorting.add(filtering);
@@ -156,8 +164,21 @@ class PageParameters extends Parameters {
 class Data extends Jsonable {}
 
 class Result<T extends Data> extends Jsonable {
-  int rowcount, page, pagesize;
-  String serviceid, type, vcode, message, messagedetail;
+  @Json(name: 'rowcount')
+  int rowCount;
+
+  int page;
+
+  @Json(name: 'pagesize')
+  int pageSize;
+
+  @Json(name: 'serviceid')
+  String serviceId;
+
+  String type, vcode, message;
+
+  @Json(name: 'messagedetail')
+  String messageDetail;
 
   @Json(name: 'datas')
   List<T> _datas;
@@ -365,7 +386,7 @@ class DyryQuery extends PageParameters {
   String sbbd = '';
 
   DyryQuery({this.dlny, this.yssj = '1', this.cbzt = '1', this.sbbd = '1'})
-      : super('dyryQuery', page: 1, pagesize: 500, sorting: [
+      : super('dyryQuery', page: 1, pageSize: 500, sorting: [
           {"dataKey": "xzqh", "sortDirection": "ascending"}
         ]);
 }
@@ -428,8 +449,9 @@ class Dyry extends Data {
     else if (year == 0) {
       if (month >= 7) return 1;
       return 0;
-    } else
+    } else {
       return year;
+    }
   }
 
   /// 实缴年限
@@ -523,7 +545,7 @@ class DyfhQuery extends PageParameters {
       List sorting = const [
         {"dataKey": "aaa027", "sortDirection": "ascending"}
       ]})
-      : super('dyfhQuery', page: page, pagesize: pagesize, sorting: sorting);
+      : super('dyfhQuery', page: page, pageSize: pagesize, sorting: sorting);
 }
 
 class Dyfh extends Data with BaseInfo {
@@ -604,4 +626,55 @@ class BankInfo extends Data {
     "JT": "交通银行",
     "GS": "中国工商银行",
   };
+}
+
+class CwzfglQuery extends PageParameters {
+  String aaa121 = '', aaz031 = '';
+
+  @Json(name: 'aae002')
+  String yearMonth;
+
+  @Json(name: 'aae089')
+  String state;
+
+  String bie013 = '';
+
+  CwzfglQuery(this.yearMonth, this.state)
+      : super('cwzfglQuery', page: 1, pageSize: 1000, totals: [
+          {"dataKey": "aae169", "aggregate": "sum"}
+        ]);
+}
+
+class Cwzfgl extends Data {
+  /// 支付对象类型: "3" - 个人支付
+  @Json(name: 'aaa079')
+  String type;
+
+  /// 支付单号
+  @Json(name: 'aaz031')
+  int paymentNO;
+
+  /// 支付状态
+  @Json(name: 'aae088')
+  String state;
+
+  /// 业务类型: "F10004" - 重复缴费退费; "F10007" - 缴费调整退款; "F10006" - 享受终止退保
+  @Json(name: 'aaa121')
+  String paymentType;
+
+  /// 发放年月
+  @Json(name: 'aae002')
+  int yearMonth;
+
+  /// 支付对象银行户名
+  @Json(name: 'aae009')
+  String bankName;
+
+  /// 支付对象编码（身份证号码）
+  @Json(name: 'bie013')
+  String code;
+
+  /// 支付对象银行账号
+  @Json(name: 'aae010')
+  String bankAccount;
 }
