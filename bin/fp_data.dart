@@ -3,24 +3,124 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yhcjb/yhcjb.dart';
 import 'package:xlsx_decoder/xlsx_decoder.dart';
-import 'package:args/command_runner.dart';
-import 'package:args/arguments_command.dart';
+import 'package:commander/commander.dart';
 
 main(List<String> args) {
-  CommandRunner('fp_data', '扶贫数据导库比对程序')
-    ..addCommand(Pkrk())
-    ..addCommand(Tkry())
-    ..addCommand(Csdb())
-    ..addCommand(Ncdb())
-    ..addCommand(Cjry())
-    ..addCommand(Hbdc())
-    ..addCommand(Scdc())
-    ..addCommand(Rdsf())
-    ..addCommand(Drjb())
-    ..addCommand(Jbzt())
-    ..addCommand(Dcsj())
-    ..addCommand(Sfbg())
-    ..run(args);
+  var program = Command()..setDescription('扶贫数据导库比对程序');
+
+  program.command('pkrk')
+    ..setDescription('导入贫困人口数据')
+    ..setArguments('<date> <xlsx> <beginRow> <endRow>', {'date': 'yyyymm'})
+    ..setAction((List args) {
+      importFpHistoryData(fetchTkData(
+          date: args[0],
+          xlsx: args[1],
+          beginRow: int.parse(args[2]),
+          endRow: int.parse(args[3])));
+    });
+
+  program.command('tkry')
+    ..setDescription('导入特困人员数据')
+    ..setArguments('<date> <xlsx> <beginRow> <endRow>', {'date': 'yyyymm'})
+    ..setAction((List args) {
+      importFpHistoryData(fetchTkData(
+          date: args[0],
+          xlsx: args[1],
+          beginRow: int.parse(args[2]),
+          endRow: int.parse(args[3])));
+    });
+
+  program.command('csdb')
+    ..setDescription('导入城市低保数据')
+    ..setArguments('<date> <xlsx> <beginRow> <endRow>', {'date': 'yyyymm'})
+    ..setAction((List args) {
+      importFpHistoryData(fetchCsdbData(
+          date: args[0],
+          xlsx: args[1],
+          beginRow: int.parse(args[2]),
+          endRow: int.parse(args[3])));
+    });
+
+  program.command('ncdb')
+    ..setDescription('导入农村低保数据')
+    ..setArguments('<date> <xlsx> <beginRow> <endRow>', {'date': 'yyyymm'})
+    ..setAction((List args) {
+      importFpHistoryData(fetchNcdbData(
+          date: args[0],
+          xlsx: args[1],
+          beginRow: int.parse(args[2]),
+          endRow: int.parse(args[3])));
+    });
+
+  program.command('cjry')
+    ..setDescription('导入残疾人员数据')
+    ..setArguments('<date> <xlsx> <beginRow> <endRow>', {'date': 'yyyymm'})
+    ..setAction((List args) {
+      importFpHistoryData(fetchCjData(
+          date: args[0],
+          xlsx: args[1],
+          beginRow: int.parse(args[2]),
+          endRow: int.parse(args[3])));
+    });
+
+  program.command('hbdc')
+    ..setDescription('合并到扶贫历史数据底册')
+    ..setArguments('<date>', {'date': 'yyyymm'})
+    ..setAction((List args) {
+      var date = args[0];
+      mergeFpData('2019年度扶贫历史数据底册', fetchFpData(date, false), recreate: false);
+    });
+
+  program.command('scdc')
+    ..setDescription('生成当月扶贫数据底册')
+    ..setArguments('<date>', {'date': 'yyyymm'})
+    ..setAction((List args) {
+      var date = args[0];
+      mergeFpData('$date扶贫数据底册', fetchFpData(date, true), recreate: true);
+    });
+
+  program.command('rdsf')
+    ..setDescription('认定居保身份')
+    ..setArguments('<tabeName> <date>', {'date': 'yyyymm'})
+    ..setAction((List args) {
+      affirmIndentity(args[0], args[1]);
+    });
+
+  program.command('drjb')
+    ..setDescription('导入居保参保人员明细表')
+    ..setArguments(
+        '<xlsx> <beginRow> <endRow> [\'recreate\']', {'date': 'yyyymm'})
+    ..setAction((List args) {
+      var recreate = false;
+      if (args.length > 3 && args[3] == 'recreate') recreate = true;
+      importJbData(args[0], int.parse(args[1]), int.parse(args[2]), recreate);
+    });
+
+  program.command('jbzt')
+    ..setDescription('更新居保参保状态')
+    ..setArguments('<tabeName> <date>', {'date': 'yyyymm'})
+    ..setAction((List args) {
+      updateJbzt(args[0], args[1]);
+    });
+
+  program.command('dcsj')
+    ..setDescription('导出扶贫底册数据')
+    ..setArguments('<tabeName>')
+    ..setAction((List args) {
+      var tableName = args[0];
+      var tmplXlsx = 'D:\\精准扶贫\\雨湖区精准扶贫底册模板.xlsx';
+      var saveXlsx = 'D:\\精准扶贫\\$tableName${getFormatDate()}.xlsx';
+      exportFpData(tableName, tmplXlsx, saveXlsx);
+    });
+
+  program.command('sfbg')
+    ..setDescription('导出居保参保身份变更信息表')
+    ..setArguments('<dir>')
+    ..setAction((List args) {
+      exportChanged(args[0]);
+    });
+
+  program.parse(args);
 }
 
 Iterable<FpRawData> fetchPkData(
@@ -490,7 +590,7 @@ exportChanged(String path) async {
 
   for (var list in jbsfMap) {
     var type = list[0], code = list[1];
-    
+
     var sql = '''
 select ${jbTable[#name]} as name, ${jbTable[#idcard]} as idcard
   from ${jbTable.name}, ${fpBook.name}
@@ -528,158 +628,13 @@ select ${jbTable[#name]} as name, ${jbTable[#idcard]} as idcard
         row.cell('C').setValue(d[0]);
         row.cell('H').setValue(code);
       }
-      if (workbook != null)
+      if (workbook != null) {
         workbook.toFile(p.join(path, '${type}批量信息变更表${++files}.xlsx'));
+      }
 
       print('结束导出 $type 批量信息变更表: $i 条');
     }
   }
 
   await db.close();
-}
-
-class Pkrk extends ArgumentsCommand {
-  Pkrk()
-      : super('pkrk',
-            description: '导入贫困人口数据',
-            arguments: '<date:yyyymm> <xlsx> <beginRow> <endRow>');
-  @override
-  void execute(List<String> args) async {
-    importFpHistoryData(fetchPkData(
-        date: args[0],
-        xlsx: args[1],
-        beginRow: int.parse(args[2]),
-        endRow: int.parse(args[3])));
-  }
-}
-
-class Tkry extends ArgumentsCommand {
-  Tkry()
-      : super('tkry',
-            description: '导入特困人员数据',
-            arguments: '<date:yyyymm> <xlsx> <beginRow> <endRow>');
-  @override
-  void execute(List<String> args) async {
-    importFpHistoryData(fetchTkData(
-        date: args[0],
-        xlsx: args[1],
-        beginRow: int.parse(args[2]),
-        endRow: int.parse(args[3])));
-  }
-}
-
-class Csdb extends ArgumentsCommand {
-  Csdb()
-      : super('csdb',
-            description: '导入城市低保数据',
-            arguments: '<date:yyyymm> <xlsx> <beginRow> <endRow>');
-  @override
-  void execute(List<String> args) async {
-    importFpHistoryData(fetchCsdbData(
-        date: args[0],
-        xlsx: args[1],
-        beginRow: int.parse(args[2]),
-        endRow: int.parse(args[3])));
-  }
-}
-
-class Ncdb extends ArgumentsCommand {
-  Ncdb()
-      : super('ncdb',
-            description: '导入农村低保数据',
-            arguments: '<date:yyyymm> <xlsx> <beginRow> <endRow>');
-  @override
-  void execute(List<String> args) async {
-    importFpHistoryData(fetchNcdbData(
-        date: args[0],
-        xlsx: args[1],
-        beginRow: int.parse(args[2]),
-        endRow: int.parse(args[3])));
-  }
-}
-
-class Cjry extends ArgumentsCommand {
-  Cjry()
-      : super('cjry',
-            description: '导入残疾人员数据',
-            arguments: '<date:yyyymm> <xlsx> <beginRow> <endRow>');
-  @override
-  void execute(List<String> args) async {
-    importFpHistoryData(fetchCjData(
-        date: args[0],
-        xlsx: args[1],
-        beginRow: int.parse(args[2]),
-        endRow: int.parse(args[3])));
-  }
-}
-
-class Hbdc extends ArgumentsCommand {
-  Hbdc()
-      : super('hbdc', description: '合并到扶贫历史数据底册', arguments: '<date:yyyymm>');
-  @override
-  void execute(List<String> args) async {
-    var date = args[0];
-    mergeFpData('2019年度扶贫历史数据底册', fetchFpData(date, false), recreate: false);
-  }
-}
-
-class Scdc extends ArgumentsCommand {
-  Scdc() : super('scdc', description: '生成当月扶贫数据底册', arguments: '<date:yyyymm>');
-  @override
-  void execute(List<String> args) async {
-    var date = args[0];
-    mergeFpData('$date扶贫数据底册', fetchFpData(date, true), recreate: true);
-  }
-}
-
-class Rdsf extends ArgumentsCommand {
-  Rdsf()
-      : super('rdsf',
-            description: '认定居保身份', arguments: '<tabeName> <date:yyyymm>');
-  @override
-  void execute(List<String> args) async {
-    affirmIndentity(args[0], args[1]);
-  }
-}
-
-class Drjb extends ArgumentsCommand {
-  Drjb()
-      : super('drjb',
-            description: '导入居保参保人员明细表',
-            arguments: '<xlsx> <beginRow> <endRow> [\'recreate\']');
-  @override
-  void execute(List<String> args) async {
-    var recreate = false;
-    if (args.length > 3 && args[3] == 'recreate') recreate = true;
-    importJbData(args[0], int.parse(args[1]), int.parse(args[2]), recreate);
-  }
-}
-
-class Jbzt extends ArgumentsCommand {
-  Jbzt()
-      : super('jbzt',
-            description: '更新居保参保状态', arguments: '<tableName> <date:yyyymmdd>');
-  @override
-  void execute(List<String> args) async {
-    updateJbzt(args[0], args[1]);
-  }
-}
-
-class Dcsj extends ArgumentsCommand {
-  Dcsj() : super('dcsj', description: '导出扶贫底册数据', arguments: '<tableName>');
-  @override
-  void execute(List<String> args) async {
-    var tableName = args[0];
-    var tmplXlsx = 'D:\\精准扶贫\\雨湖区精准扶贫底册模板.xlsx';
-    var saveXlsx = 'D:\\精准扶贫\\$tableName${getFormatDate()}.xlsx';
-    exportFpData(tableName, tmplXlsx, saveXlsx);
-  }
-}
-
-class Sfbg extends ArgumentsCommand {
-  Sfbg() : super('sfbg', description: '导出居保参保身份变更信息表', arguments: '<dir>');
-  @override
-  void execute(List<String> args) async {
-    exportChanged(args[0]);
-  }
 }

@@ -12,13 +12,10 @@ dependencies:
   mysql1: ^0.17.0
   xlsx_decoder:
     path: ../xlsx_decoder
-  args: ^1.4.0
+  commander:
+    path: ../commander
   intl: ^0.15.8
 
 dev_dependencies:
   pedantic: ^1.0.0
   test: ^1.0.0
-
-dependency_overrides:
-  args:
-    path: ../args

@@ -1,6 +1,7 @@
 import 'package:yhcjb/yhcjb.dart';
 import 'package:xlsx_decoder/xlsx_decoder.dart' as xlsx;
 import 'package:path/path.dart' as p;
+import 'package:commander/commander.dart';
 
 const jbsfMap = {
   '贫困人口一级': '051',
@@ -11,34 +12,39 @@ const jbsfMap = {
   '残二级': '022'
 };
 
-usage() {
-  print(r'usage:   dart bin\jb_cbsh.dart 开始审核时间 [结束审核时间]');
-  print(r'example: dart bin\jb_cbsh.dart 20190429 20190505');
+main(List<String> args) {
+  Command()
+    ..setDescription('特殊参保人员身份信息变更导出程序')
+    ..setArguments('<qsshsj> [jzshsj]',
+        {'qsshsj': '起始审核时间, 例如: 20190429', 'jzshsj': '截至审核时间, 例如: 20190505'})
+    ..setAction((Map args) {
+      String qsshsj = args['qsshsj'];
+      String jzshsj = args['jzshsj'];
+      jbCbsh(qsshsj, jzshsj);
+    })
+    ..parse(args);
 }
 
-main(List<String> args) async {
+jbCbsh(String qsshsj, String jzshsj) async {
   String dir = r'D:\精准扶贫\';
   String template = '批量信息变更模板.xlsx';
 
-  if (args.isEmpty) {
-    usage();
-    return;
-  }
-
-  String qsshsj, jsshsj;
   try {
-    qsshsj = getYearMonthDay(args[0])[3];
-    if (args.length > 1) jsshsj = getYearMonthDay(args[1])[3];
+    qsshsj = getYearMonthDay(qsshsj)[3];
+    if (jzshsj != null) {
+      jzshsj = getYearMonthDay(jzshsj)[3];
+    }
   } catch (error) {
-    usage();
+    print(error);
     return;
   }
 
-  print('$qsshsj${jsshsj != null ? ' ' + jsshsj : ''}');
+  print('$qsshsj${jzshsj != null ? ' ' + jzshsj : ''}');
 
   Result<Cbsh> result;
   Session.use((session) {
-    session.sendService(CbshQuery(qsshsj: qsshsj, jzshsj: jsshsj, shzt: '1'));
+    session.sendService(
+        CbshQuery(qsshsj: qsshsj, jzshsj: jzshsj ?? '', shzt: '1'));
     result = session.getResult<Cbsh>();
   });
 
@@ -59,26 +65,21 @@ main(List<String> args) async {
         print(row);
         export = true;
 
-        xlsx.Row xrow;
-        if (index == copyIndex)
-          xrow = sheet.rowAt(index);
-        else
-          xrow = sheet.insertRowCopyFrom(index, copyIndex);
-        xrow.cell('A').setValue(cbsh.idcard);
-        xrow.cell('C').setValue(cbsh.name);
-        xrow.cell('H').setValue(jbsfMap[row[2]]);
-
-        index++;
+        sheet.copyRowTo(copyIndex, index++, clearValue: false)
+          ..cell('A').setValue(cbsh.idcard)
+          ..cell('C').setValue(cbsh.name)
+          ..cell('H').setValue(jbsfMap[row[2]]);
       }
 
       await conn.close();
     }
-    if (export)
+    if (export) {
       workbook.toFile(p.join(
           dir,
           '批量信息变更模板' +
               qsshsj +
-              (jsshsj != null ? '_' + jsshsj : '') +
+              (jzshsj != null ? '_' + jzshsj : '') +
               '.xlsx'));
+    }
   }
 }
