@@ -575,7 +575,7 @@ class Dyfh extends Data with BaseInfo {
 
   int aaz170, aaz159, aaz157;
 
-  get paymentInfo {
+  Match get paymentInfo {
     var escape = (data) {
       return htmlEscape.convert('$data');
     };
