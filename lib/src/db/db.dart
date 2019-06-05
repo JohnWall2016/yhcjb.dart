@@ -230,7 +230,7 @@ class Model<T> {
   }
 
   dropTableSql() {
-    return 'drop table `$name`';
+    return 'drop table if exists `$name`';
   }
 
   createTableSql() {

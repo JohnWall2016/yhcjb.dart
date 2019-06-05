@@ -7,7 +7,7 @@ stop(String message, [int code = -1]) {
   exit(code);
 }
 
-getYearMonthDay(date) {
+List<String> getYearMonthDay(date) {
   var ma = RegExp(r'^(\d\d\d\d)(\d\d)(\d\d)$').firstMatch(date);
   if (ma != null) {
     var y = ma.group(1);

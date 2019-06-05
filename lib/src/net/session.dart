@@ -559,7 +559,7 @@ class Dyfh extends Data with BaseInfo {
 
   /// 月养老金
   @Json(name: 'aic166')
-  double payAmount;
+  num payAmount;
 
   /// 财务月份
   @Json(name: 'aae211')

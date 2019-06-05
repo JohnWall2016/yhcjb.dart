@@ -32,7 +32,7 @@ const infoXlsx = '${rootDir}\\信息核对报告表模板.xlsx';
 const payInfoXslx = '${rootDir}\\养老金计算表模板.xlsx';
 const fphdXlsx = '${rootDir}\\到龄贫困人员待遇核定情况表模板.xlsx';
 
-void fphd(List<String> args) async {
+void fphd(List args) async {
   String date = args[0];
   String dlny = getYearMonthDay(date)[3];
   var saveXlsx = '${rootDir}\\到龄贫困人员待遇核定情况表(截至${date}).xlsx';
@@ -89,7 +89,7 @@ void fphd(List<String> args) async {
   workbook.toFile(saveXlsx);
 }
 
-void download(List<String> args) async {
+void download(List args) async {
   String date = args[0];
   getYearMonthDay(date);
 
@@ -140,17 +140,17 @@ void download(List<String> args) async {
         ..cell('H').setValue('否 [ ]')
         ..cell('I').setValue('是 [ ]')
         ..cell('J').setValue('否 [ ]')
-        ..cell('K').setValue(data.bz)
-        ..cell('L').setValue(data.fpType)
-        ..cell('M').setValue(data.fpName);
+        ..cell('L').setValue(data.bz)
+        ..cell('M').setValue(data.fpType)
+        ..cell('N').setValue(data.fpName);
     }
     workbook.toFile(saveXlsx);
   }
 }
 
-void split(List<String> args) async {
+void split(List args) async {
   String date = args[0];
-  String ymd = getYearMonthDay(date);
+  var ymd = getYearMonthDay(date);
   String year = ymd[0], month = ymd[1];
   int start = int.parse(args[1]);
   int end = int.parse(args[2]);

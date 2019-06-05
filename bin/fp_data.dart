@@ -12,7 +12,7 @@ main(List<String> args) {
     ..setDescription('导入贫困人口数据')
     ..setArguments('<date> <xlsx> <beginRow> <endRow>', {'date': 'yyyymm'})
     ..setAction((List args) {
-      importFpHistoryData(fetchTkData(
+      importFpHistoryData(fetchPkData(
           date: args[0],
           xlsx: args[1],
           beginRow: int.parse(args[2]),
@@ -81,7 +81,8 @@ main(List<String> args) {
 
   program.command('rdsf')
     ..setDescription('认定居保身份')
-    ..setArguments('<tabeName> <date>', {'date': 'yyyymm'})
+    ..setArguments('<tabeName> <date>',
+        {'tableName': '表名称，例如：2019年度扶贫历史数据底册, 201905扶贫数据底册', 'date': 'yyyymm'})
     ..setAction((List args) {
       affirmIndentity(args[0], args[1]);
     });
@@ -159,8 +160,8 @@ Iterable<FpRawData> fetchTkData(
   for (var index = beginRow; index <= endRow; index++) {
     var row = sheet.rowAt(index);
     if (row != null) {
-      String name = row.cell('E').value();
-      String idcard = row.cell('G').value();
+      String name = row.cell('G').value();
+      String idcard = row.cell('H').value();
       idcard = idcard.trim().substring(0, 18);
       String birthDay = idcard.substring(6, 14);
       String xzj = row.cell('C').value();
@@ -220,6 +221,9 @@ Iterable<FpRawData> fetchCsdbData(
               fpdata.type = '全额低保人员';
               yield fpdata;
             } else if (type == '差额救助') {
+              fpdata.type = '差额低保人员';
+              yield fpdata;
+            } else {
               fpdata.type = '差额低保人员';
               yield fpdata;
             }
@@ -342,10 +346,11 @@ importFpHistoryData(Iterable<FpRawData> records) async {
         Eq(#date, record.date)
       ]);
       var count = await model.count(where);
-      if (count > 0)
+      if (count > 0) {
         await model.update(record, condition: where);
-      else
+      } else {
         await model.insert(record);
+      }
     }
   }
   await db.close();
