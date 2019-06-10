@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
-import 'dart:math';
+import 'dart:math' as math;
 
 stop(String message, [int code = -1]) {
   print(message);
@@ -19,6 +19,20 @@ List<String> getYearMonthDay(date) {
     if (d[0] == '0') d = d.substring(1);
 
     return [y, m, d, ymd];
+  } else {
+    throw ArgumentError('Invalid date format (YYYYMMDD).');
+  }
+}
+
+List<String> getYearMonth(yearMonth) {
+  var ma = RegExp(r'^(\d\d\d\d)(\d\d)$').firstMatch(yearMonth);
+  if (ma != null) {
+    var y = ma.group(1);
+    var m = ma.group(2);
+
+    if (m[0] == '0') m = m.substring(1);
+
+    return [y, m];
   } else {
     throw ArgumentError('Invalid date format (YYYYMMDD).');
   }
@@ -45,7 +59,7 @@ const _randomChars =
 
 String randomString(int length) {
   StringBuffer buf = StringBuffer();
-  var rnd = Random();
+  var rnd = math.Random();
   var max = _randomChars.length;
 
   for (var i = 0; i < length; i++) {
@@ -69,4 +83,95 @@ String getFormatDate() {
   return '${d.year}' +
       '${d.month}'.padLeft(2, '0') +
       '${d.day}'.padLeft(2, '0');
+}
+
+const _bign = [
+  '零',
+  '壹',
+  '贰',
+  '叁',
+  '肆',
+  '伍',
+  '陆',
+  '柒',
+  '捌',
+  '玖',
+];
+
+const _place = ['', '拾', '佰', '仟', '万', '亿'];
+
+const _unit = [
+  '元',
+  '角',
+  '分',
+];
+
+const _whole = '整';
+
+String getMoneyCh(num number) {
+  var n = (number * 100).toInt();
+  var integer = n ~/ 100;
+  var fraction = n % 100;
+
+  int length = integer.toString().length;
+  var ret = '';
+  var zero = false;
+  for (var i = length; i >= 0; i--) {
+    var base = math.pow(10, i);
+    if (integer ~/ base > 0) {
+      if (zero) {
+        ret += _bign[0];
+      }
+      ret += _bign[integer ~/ base] + _place[i % 4];
+      zero = false;
+    } else if (integer ~/ base == 0 && ret != '') {
+      zero = true;
+    }
+    if (i >= 4) {
+      if (i % 8 == 0 && ret != '') {
+        ret += _place[5];
+      } else if (i % 4 == 0 && ret != '') {
+        ret += _place[4];
+      }
+    }
+    integer = integer % base;
+    if (integer == 0 && i != 0) {
+      zero = true;
+      break;
+    }
+  }
+  ret += _unit[0];
+
+  if (fraction == 0) {
+    // .00
+    ret += _whole;
+  } else if (fraction % 10 == 0) {
+    // .D0
+    if (zero) {
+      ret += _bign[0];
+    }
+    ret += _bign[fraction ~/ 10] + _unit[1] + _whole;
+  } else {
+    // .0D or .DD
+    if (zero || fraction ~/ 10 == 0) {
+      ret += _bign[0];
+    }
+    if (fraction ~/ 10 != 0) {
+      // .DD
+      ret += _bign[fraction ~/ 10] + _unit[1];
+    }
+    ret += _bign[fraction % 10] + _unit[2];
+  }
+  return ret;
+}
+
+String appendToFileName(String fileName, String appendString) {
+  var index = fileName.indexOf('.');
+  if (index >= 0) {
+    return fileName.substring(0, index) +
+        appendString +
+        fileName.substring(index);
+  } else {
+    return fileName + appendString;
+  }
 }

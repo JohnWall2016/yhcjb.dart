@@ -615,17 +615,27 @@ class BankInfo extends Data {
   @Json(name: 'aae010')
   String cardNumber;
 
-  String get bankName => bankMap[bankType];
+  String get bankName => _getBankName(bankType);
+}
 
-  static const bankMap = {
-    "LY": "中国农业银行",
-    "ZG": "中国银行",
-    "JS": "中国建设银行",
-    "NH": "农村信用合作社",
-    "YZ": "邮政",
-    "JT": "交通银行",
-    "GS": "中国工商银行",
-  };
+String _getBankName(String bankType) {
+  switch (bankType) {
+    case "LY":
+      return "中国农业银行";
+    case "ZG":
+      return "中国银行";
+    case "JS":
+      return "中国建设银行";
+    case "NH":
+      return "农村信用合作社";
+    case "YZ":
+      return "邮政";
+    case "JT":
+      return "交通银行";
+    case "GS":
+      return "中国工商银行";
+  }
+  return "";
 }
 
 class CwzfglQuery extends PageParameters {
@@ -668,7 +678,7 @@ class Cwzfgl extends Data {
 
   /// 支付对象银行户名
   @Json(name: 'aae009')
-  String bankName;
+  String paidName;
 
   /// 支付对象编码（身份证号码）
   @Json(name: 'bie013')
@@ -676,5 +686,176 @@ class Cwzfgl extends Data {
 
   /// 支付对象银行账号
   @Json(name: 'aae010')
-  String bankAccount;
+  String paidAccount;
+}
+
+class CwzfglZfdryQuery extends PageParameters {
+  CwzfglZfdryQuery(
+      {this.paymentNO = '',
+      this.yearMonth = '',
+      this.state = '',
+      this.paymentType = ''})
+      : super('cwzfgl_zfdryQuery', page: 1, pageSize: 1000, totals: [
+          {"dataKey": "aae019", "aggregate": "sum"}
+        ]);
+
+  String aaf015 = '';
+
+  /// 身份证号码
+  @Json(name: "aac002")
+  String idcard = "";
+
+  @Json(name: "aac003")
+  String name = "";
+
+  /// 支付单号
+  @Json(name: 'aaz031')
+  String paymentNO;
+
+  /// 支付状态
+  @Json(name: 'aae088')
+  String state;
+
+  /// 业务类型: "F10004" - 重复缴费退费; "F10007" - 缴费调整退款; "F10006" - 享受终止退保
+  @Json(name: 'aaa121')
+  String paymentType;
+
+  /// 发放年月
+  @Json(name: 'aae002')
+  String yearMonth;
+}
+
+class CwzfglZfdry extends Data with BaseInfo, Xzqh {
+  /// 支付单号
+  @Json(name: 'aaz031')
+  int payList;
+
+  /// 支付总金额
+  @Json(name: 'aae019')
+  num paidAmount;
+
+  /// 业务类型: "F10004" - 重复缴费退费; "F10007" - 缴费调整退款; "F10006" - 享受终止退保
+  @Json(name: 'aaa121')
+  String paymentType;
+
+  String get paymentTypeCh {
+    switch (paymentType) {
+      case "F10004":
+        return "重复缴费退费";
+      case "F10006":
+        return "享受终止退保";
+      case "F10007":
+        return "缴费调整退款";
+    }
+    return "";
+  }
+}
+
+abstract class ZzfhPerInfoList {
+  String aaf013 = '', aaf030 = '', aae016 = '';
+  String aae011 = '', aae036 = '', aae036s = '';
+  String aae014 = '', aae015 = '', aae015s = '';
+
+  /// 身份证号码
+  @Json(name: "aac002")
+  String idcard = "";
+
+  String aac003 = '', aac009 = '', aae0160 = '';
+}
+
+class CbzzfhPerInfoListQuery extends PageParameters with ZzfhPerInfoList {
+  CbzzfhPerInfoListQuery(String idcard) : super('cbzzfhPerInfoList') {
+    this.idcard = idcard;
+  }
+}
+
+class CbzzfhPerInfoList extends Data with BaseInfo, Xzqh {
+  /// 终止年月
+  @Json(name: 'aae031')
+  String zzny;
+
+  /// 审核日期
+  @Json(name: 'aae015')
+  String shrq;
+
+  int aaz038, aac001;
+  String aae160;
+}
+
+class CbzzfhPerInfoQuery extends Parameters {
+  CbzzfhPerInfoQuery(CbzzfhPerInfoList list)
+      : aaz038 = '${list.aaz038}',
+        aac001 = '${list.aac001}',
+        aae160 = '${list.aae160}',
+        super('cbzzfhPerinfo');
+
+  String aaz038, aac001, aae160;
+}
+
+class CbzzfhPerInfo extends Data {
+  /// 终止原因
+  @Json(name: 'aae160')
+  String reason;
+
+  /// 银行类型
+  @Json(name: 'aaz065')
+  String bankType;
+
+  String get reasonCh => _getZzReasonChn(reason);
+
+  String get bankName => _getBankName(bankType);
+}
+
+String _getZzReasonChn(String reason) {
+  switch (reason) {
+    case "1401":
+      return "死亡";
+    case "1406":
+      return "出外定居";
+    case "1407":
+      return "参加职保";
+    case "1499":
+      return "其他原因";
+    case "6401":
+      return "死亡";
+    case "6406":
+      return "出外定居";
+    case "6407":
+      return "参加职保";
+    case "6499":
+      return "其他原因";
+  }
+  return "";
+}
+
+class DyzzfhPerInfoListQuery extends PageParameters with ZzfhPerInfoList {
+  DyzzfhPerInfoListQuery(String idcard) : super('dyzzfhPerInfoList') {
+    this.idcard = idcard;
+  }
+
+  String aic301 = '';
+}
+
+class DyzzfhPerInfoList extends Data with BaseInfo, Xzqh {
+  /// 终止年月
+  @Json(name: 'aae031')
+  String zzny;
+
+  /// 审核日期
+  @Json(name: 'aae015')
+  String shrq;
+
+  int aaz176;
+}
+
+class DyzzfhPerInfoQuery extends Parameters {
+  DyzzfhPerInfoQuery(DyzzfhPerInfoList list)
+      : aaz176 = '${list.aaz176}',
+        super('dyzzfhPerinfo');
+
+  String aaz176;
+}
+
+class DyzzfhPerInfo extends CbzzfhPerInfo {
+
 }
