@@ -23,9 +23,12 @@ doc(List args) {
     for (var i = 1; i <= sheet.lastRowIndex; i++) {
       var row = sheet.rowAt(i);
       String idcard = row.cell('A').value();
-      session.sendService(GrinfoQuery(idcard));
-      var result = session.getResult<Grinfo>();
-      row.cell('D').setValue('${result[0].name}制度衔接转出相关资料');
+      String title = row.cell('D').value();
+      session.sendService(SncbxxConQuery(idcard));
+      var result = session.getResult<SncbxxCon>();
+      if (result.isNotEmpty) {
+        row.cell('E').setValue('${result[0].name}$title');
+      }
     }
   });
 

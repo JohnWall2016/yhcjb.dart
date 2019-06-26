@@ -234,6 +234,16 @@ class GrinfoQuery extends PageParameters {
   }
 }
 
+class SncbxxConQuery extends Parameters {
+  /// 身份证号码
+  @Json(name: "aac002")
+  String idcard = "";
+
+  SncbxxConQuery(String idcard) : super("executeSncbxxConQ") {
+    this.idcard = idcard;
+  }
+}
+
 abstract class BaseInfo {
   /// 个人编号
   @Json(name: 'aac001')
@@ -331,6 +341,9 @@ abstract class Ywjbsh {
 
 /// 个人综合信息
 class Grinfo extends Data with BaseInfo, OtherInfo, Xzqh {}
+
+/// 省内参保信息
+class SncbxxCon extends Data with BaseInfo, OtherInfo, Xzqh {}
 
 class CbshQuery extends PageParameters {
   String aaf013 = "",

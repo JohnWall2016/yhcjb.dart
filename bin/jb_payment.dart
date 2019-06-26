@@ -51,7 +51,7 @@ jbPayment(String yearMonth, String state) {
         String reason, bankName;
         session.sendService(DyzzfhPerInfoListQuery(payment.idcard));
         var infoListResult = session.getResult<DyzzfhPerInfoList>();
-        if (infoListResult.length > 0) {
+        if (infoListResult.isNotEmpty) {
           session.sendService(DyzzfhPerInfoQuery(infoListResult[0]));
           var infoResult = session.getResult<DyzzfhPerInfo>();
           var info = infoResult[0];
@@ -62,10 +62,10 @@ jbPayment(String yearMonth, String state) {
         } else {
           session.sendService(CbzzfhPerInfoListQuery(payment.idcard));
           var infoListResult = session.getResult<CbzzfhPerInfoList>();
-          if (infoListResult.length > 0) {
+          if (infoListResult.isNotEmpty) {
             session.sendService(CbzzfhPerInfoQuery(infoListResult[0]));
             var infoResult = session.getResult<CbzzfhPerInfo>();
-            if (infoResult.length > 0) {
+            if (infoResult.isNotEmpty) {
               var info = infoResult[0];
               reason = info.reasonCh;
               bankName = info.bankName;
