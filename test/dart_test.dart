@@ -1,7 +1,12 @@
 import 'dart:io';
+import 'dart:math' as math;
+import 'dart:mirrors';
 
 import 'package:yhcjb/yhcjb.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
+
+import 'package:icu4dart/icu4dart.dart';
 
 main() {
   /*
@@ -23,7 +28,7 @@ main() {
   //print(getFormatDate());
   /*print(1 / 2);
   print(1 ~/ 2);*/
-
+/*
   var man = ['John', 'Peter'];
   var people = ['Rose', ...man];
   print(people);
@@ -31,6 +36,61 @@ main() {
   print(Platform.localeName);
 
   print(DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()));
+
+  print('--abc, no-ccc'.replaceAll(RegExp('--|no-'), ''));
+
+  //print(''.substring(2));
+  print('aaa-bbb-ccc'.split('-').reduce((v, e) {
+    if (e != null && e.isNotEmpty) {
+      return v + e[0].toUpperCase() + e.substring(1);
+    }
+  }));
+
+  List<String> a;
+
+  print(<String>[...(a ?? []), ''].map((s) => s.length).reduce(math.max));
+  print(<String>[].map((s) => s).join(' ') == '');
+
+  print(p.basenameWithoutExtension(Platform.script.path));
+
+  print(FunctionWithMap is Function);
+  print(fn is FunctionWithMap);
+*/
+/*  
+  print(reflectType(103.runtimeType).isAssignableTo(reflectType(num)));
+
+  num n = 10;
+  n += 1.1;
+  print(n);
+
+  print(getMoneyCh(12325002652306.01));
+*/
+  var collator = Collator('zh');
+  var list = [
+    "长城乡",
+    "昭潭街道",
+    "先锋街道",
+    "万楼街道",
+    "楠竹山镇",
+    "姜畲镇",
+    "鹤岭镇",
+    "城正街街道",
+    "雨湖路街道",
+    "云塘街道",
+    "窑湾街道",
+    "广场街道"
+  ];
+  print(list);
+  list.sort((first, second) => collator.compare(first, second));
+  print(list);
+  collator.close();
+}
+
+typedef FunctionWithMap = dynamic Function(Map<String, String> args);
+typedef FunctionWithList = dynamic Function(List args);
+
+void fn(Map args) {
+
 }
 
 class M1 {

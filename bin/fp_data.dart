@@ -217,11 +217,8 @@ Iterable<FpRawData> fetchCsdbData(
               ..address = address
               ..detail = '城市'
               ..date = date;
-            if (type == '全额救助') {
+            if (type == '全额救助' || type == '全额') {
               fpdata.type = '全额低保人员';
-              yield fpdata;
-            } else if (type == '差额救助') {
-              fpdata.type = '差额低保人员';
               yield fpdata;
             } else {
               fpdata.type = '差额低保人员';
