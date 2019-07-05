@@ -7,6 +7,14 @@ import 'package:icu4dart/icu4dart.dart';
 main(List<String> args) {
   var program = Command()..setDescription('代发数据导出制表程序');
 
+  program.command('personList')
+    ..setDescription('正常代发人员名单导出')
+    ..setArguments('<type> <date>', {
+      'type': '代发类型: 801 - 独生子女, 802 - 乡村教师, 803 - 乡村医生, 807 - 电影放映员',
+      'date': '代发年月: 格式 YYYYMM, 如 201901'
+    })
+    ..setAction((List args) => personList(args));
+
   program.command('payList')
     ..setDescription('代发支付明细导出')
     ..setArguments('<type> <date>', {
@@ -20,6 +28,81 @@ main(List<String> args) {
 }
 
 const personListXlsx = 'D:\\代发管理\\雨湖区城乡居民基本养老保险代发人员名单.xlsx';
+
+void personList(List args) async {
+  String type = args[0];
+  String yearMonth = args[1];
+
+  var workbook = xlsx.Workbook.fromFile(personListXlsx);
+  var sheet = workbook.sheetAt(0);
+
+  var startRow = 4, currentRow = 4;
+  num sum = 0;
+
+  var date = DateFormat('yyyyMMdd').format(DateTime.now());
+  var dateCh = DateFormat('yyyy年M月d日').format(DateTime.now());
+  var reportDate = '制表时间：$dateCh';
+
+  sheet.cell('G2').setValue(reportDate);
+
+  Session.use((session) {
+    session.sendService(DfrymdQuery(type, '1', '1'));
+    var result = session.getResult<Dfrymd>();
+    result.datas.forEach((data) {
+      if (data.grbh == null) return;
+      num payAmount = 0;
+      if (data.standard != null) {
+        var startYear = data.startYearMonth ~/ 100;
+        var startMonth = data.startYearMonth % 100;
+        startMonth -= 1;
+        if (startMonth == 0) {
+          startYear -= 1;
+          startMonth = 12;
+        }
+        if (data.endYearMonth != null) {
+          startYear = data.endYearMonth ~/ 100;
+          startMonth = data.endYearMonth % 100;
+        }
+        var match = RegExp(r'^(\d\d\d\d)(\d\d)$').firstMatch(yearMonth);
+        if (match != null) {
+          var endYear = int.parse(match.group(1));
+          var endMonth = int.parse(match.group(2));
+          payAmount = ((endYear - startYear) * 12 + endMonth - startMonth) *
+              data.standard;
+        }
+      } else if (data.totalSum == 5000) {
+        return;
+      }
+
+      sheet.copyRowTo(startRow, currentRow++, clearValue: true)
+        ..cell('A').setValue(currentRow - startRow)
+        ..cell('B').setValue(data.region)
+        ..cell('C').setValue(data.name)
+        ..cell('D').setValue(data.idcard)
+        ..cell('E').setValue(data.startYearMonth)
+        ..cell('F').setValue(data.standard)
+        ..cell('G').setValue(data.type)
+        ..cell('H').setValue(data.jbStateChn)
+        ..cell('I').setValue(data.endYearMonth)
+        ..cell('J').setValue(data.totalSum)
+        ..cell('K').setValue(payAmount);
+
+      sum += payAmount;
+    });
+  });
+
+  sheet.copyRowTo(startRow, currentRow, clearValue: true)
+    ..cell('A').setValue('')
+    ..cell('C').setValue('共计')
+    ..cell('D').setValue(currentRow - startRow)
+    ..cell('F').setValue('')
+    ..cell('J').setValue('合计')
+    ..cell('K').setValue(sum);
+
+  workbook.toFile(
+      appendToFileName(personListXlsx, '(${Dfrymd.getTypeName(type)})$date'));
+}
+
 const payListXlsx = 'D:\\代发管理\\雨湖区城乡居民基本养老保险代发人员支付明细.xlsx';
 
 class PayListItem {

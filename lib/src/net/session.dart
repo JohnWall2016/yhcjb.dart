@@ -890,6 +890,96 @@ class DyzzfhPerInfoQuery extends Parameters {
 
 class DyzzfhPerInfo extends CbzzfhPerInfo {}
 
+/// 代发人员名单查询
+class DfrymdQuery extends PageParameters {
+  String aaf013 = '', aaf030 = '';
+
+  /// 居保参保状态
+  @Json(name: 'aae100')
+  String cbState;
+
+  String aac002 = '', aac003 = '';
+
+  /// 代发状态
+  @Json(name: 'aae116')
+  String dfState;
+
+  String aac082 = '';
+
+  /// 代发类型
+  @Json(name: 'aac066')
+  String type;
+
+  DfrymdQuery(this.type, this.cbState, this.dfState,
+      {int page = 1,
+      int pageSize = 500,
+      List sorting = const [
+        {"dataKey": "aaf103", "sortDirection": "ascending"}
+      ]})
+      : super('executeDfrymdQuery',
+            page: page, pageSize: pageSize, sorting: sorting);
+}
+
+String _getJbStateChn(String state) {
+  switch (state) {
+    case "1":
+      return "正常参保";
+    case "2":
+      return "暂停参保";
+    case "3":
+      return "未参保";
+    case "4":
+      return "终止参保";
+  }
+  return "";
+}
+
+class Dfrymd extends Data with BaseInfo, Region {
+  /// 代发开始年月
+  @Json(name: 'aic160')
+  int startYearMonth;
+
+  /// 代发标准
+  @Json(name: 'aae019')
+  num standard;
+
+  /// 代发类型
+  @Json(name: 'aac066s')
+  String type;
+
+  /// 代发状态
+  @Json(name: 'aae116')
+  String dfState;
+
+  /// 居保状态
+  @Json(name: 'aac008s')
+  String jbState;
+
+  /// 代发截至成功发放年月
+  @Json(name: 'aae002jz')
+  int endYearMonth;
+
+  /// 代发截至成功发放金额
+  @Json(name: 'aae019jz')
+  num totalSum;
+
+  String get jbStateChn => _getJbStateChn(jbState);
+
+  static String getTypeName(String type) {
+    switch (type) {
+      case "801":
+        return "独生子女";
+      case "802":
+        return "乡村教师";
+      case "803":
+        return "乡村医生";
+      case "807":
+        return "电影放映员";
+    }
+    return "";
+  }
+}
+
 /// 代发支付单查询
 class DfpayffzfdjQuery extends PageParameters {
   /// 代发类型
