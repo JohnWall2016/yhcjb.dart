@@ -255,6 +255,19 @@ abstract class BaseInfo {
 
   @Json(name: 'aac003')
   String name;
+}
+
+abstract class PersionInfo {
+  /// 个人编号
+  @Json(name: 'aac001')
+  int grbh;
+
+  /// 身份证号码
+  @Json(name: 'aac002')
+  String idcard;
+
+  @Json(name: 'aac003')
+  String name;
 
   @Json(name: 'aac004')
   String sex;
@@ -291,7 +304,7 @@ abstract class BaseInfo {
   String cbsf;
 }
 
-abstract class OtherInfo {
+abstract class ExtraInfo {
   @Json(name: "aae005")
   String phone;
 
@@ -302,7 +315,13 @@ abstract class OtherInfo {
   String bankcard;
 }
 
-abstract class Xzqh {
+abstract class Region {
+  /// 村社区名称
+  @Json(name: "aaf103")
+  String region;
+}
+
+abstract class Address {
   /// 行政区划编码
   @Json(name: "aaf101")
   String xzqh;
@@ -340,10 +359,10 @@ abstract class Ywjbsh {
 }
 
 /// 个人综合信息
-class Grinfo extends Data with BaseInfo, OtherInfo, Xzqh {}
+class Grinfo extends Data with PersionInfo, ExtraInfo, Address {}
 
 /// 省内参保信息
-class SncbxxCon extends Data with BaseInfo, OtherInfo, Xzqh {}
+class SncbxxCon extends Data with PersionInfo, ExtraInfo, Address {}
 
 class CbshQuery extends PageParameters {
   String aaf013 = "",
@@ -371,7 +390,7 @@ class CbshQuery extends PageParameters {
       : super('cbshQuery');
 }
 
-class Cbsh extends Data with BaseInfo, Xzqh, Ywjbsh {}
+class Cbsh extends Data with PersionInfo, Address, Ywjbsh {}
 
 class DyryQuery extends PageParameters {
   String aaf013 = '', aaf030 = '';
@@ -561,7 +580,7 @@ class DyfhQuery extends PageParameters {
       : super('dyfhQuery', page: page, pageSize: pagesize, sorting: sorting);
 }
 
-class Dyfh extends Data with BaseInfo {
+class Dyfh extends Data with PersionInfo {
   /// 实际待遇开始月份
   @Json(name: 'aic160')
   int payMonth;
@@ -738,7 +757,7 @@ class CwzfglZfdryQuery extends PageParameters {
   String yearMonth;
 }
 
-class CwzfglZfdry extends Data with BaseInfo, Xzqh {
+class CwzfglZfdry extends Data with PersionInfo, Address {
   /// 支付单号
   @Json(name: 'aaz031')
   int payList;
@@ -782,7 +801,7 @@ class CbzzfhPerInfoListQuery extends PageParameters with ZzfhPerInfoList {
   }
 }
 
-class CbzzfhPerInfoList extends Data with BaseInfo, Xzqh {
+class CbzzfhPerInfoList extends Data with PersionInfo, Address {
   /// 终止年月
   @Json(name: 'aae031')
   String zzny;
@@ -849,7 +868,7 @@ class DyzzfhPerInfoListQuery extends PageParameters with ZzfhPerInfoList {
   String aic301 = '';
 }
 
-class DyzzfhPerInfoList extends Data with BaseInfo, Xzqh {
+class DyzzfhPerInfoList extends Data with PersionInfo, Address {
   /// 终止年月
   @Json(name: 'aae031')
   String zzny;
@@ -869,6 +888,128 @@ class DyzzfhPerInfoQuery extends Parameters {
   String aaz176;
 }
 
-class DyzzfhPerInfo extends CbzzfhPerInfo {
+class DyzzfhPerInfo extends CbzzfhPerInfo {}
 
+/// 代发支付单查询
+class DfpayffzfdjQuery extends PageParameters {
+  /// 代发类型
+  @Json(name: 'aaa121')
+  String type;
+
+  /// 支付单号
+  @Json(name: 'aaz031')
+  String payList = '';
+
+  /// 发放年月
+  @Json(name: 'aae002')
+  String yearMonth;
+
+  @Json(name: 'aae089')
+  String state;
+
+  DfpayffzfdjQuery(this.type, this.yearMonth, {this.state = '0'})
+      : super('dfpayffzfdjQuery');
+}
+
+class Dfpayffzfdj extends Data {
+  /// 业务类型中文名
+  @Json(name: 'aaa121')
+  String typeChn;
+
+  /// 付款单号
+  @Json(name: 'aaz031')
+  int payList;
+
+  static String otherPayTypeChn(String type) {
+    switch (type) {
+      case "DF0001":
+        return "独生子女";
+      case "DF0002":
+        return "乡村教师";
+      case "DF0003":
+        return "乡村医生";
+      case "DF0007":
+        return "电影放映员";
+    }
+    return "";
+  }
+}
+
+/// 代发支付单明细查询
+class DfpayffzfdjmxQuery extends PageParameters {
+  /// 付款单号
+  @Json(name: 'aaz031')
+  String payList;
+
+  DfpayffzfdjmxQuery(int payList, {int page = 1, int pageSize = 500})
+      : super('dfpayffzfdjmxQuery', page: page, pageSize: pageSize) {
+    this.payList = '$payList';
+  }
+}
+
+class Dfpayffzfdjmx extends Data with BaseInfo, Region {
+  /// 支付标志
+  @Json(name: 'aae117')
+  String flag;
+
+  /// 发放年月
+  @Json(name: 'aae002')
+  int yearMonth;
+
+  /// 付款单号
+  @Json(name: 'aaz031')
+  int payList;
+
+  /// 个人单号
+  @Json(name: 'aaz220')
+  int perPayList;
+
+  /// 支付总金额
+  @Json(name: 'aae019')
+  num payAmount;
+}
+
+/// 代发支付单明细查询
+class DfpayffzfdjgrmxQuery extends PageParameters {
+  /// 个人编号
+  @Json(name: 'aac001')
+  String grbh;
+
+  /// 付款单号
+  @Json(name: 'aaz031')
+  String payList;
+
+  /// 个人单号
+  @Json(name: 'aaz220')
+  String perPayList;
+
+  DfpayffzfdjgrmxQuery(int grbh, int payList, int perPayList,
+      {int page = 1, int pageSize = 500})
+      : super('dfpayffzfdjgrmxQuery', page: page, pageSize: pageSize) {
+    this.grbh = '$grbh';
+    this.payList = '$payList';
+    this.perPayList = '$perPayList';
+  }
+}
+
+class Dfpayffzfdjgrmx extends Data {
+  /// 待遇日期
+  @Json(name: 'aae003')
+  int pensionDate;
+
+  /// 支付标志
+  @Json(name: 'aae117')
+  String flag;
+
+  /// 发放年月
+  @Json(name: 'aae002')
+  int yearMonth;
+
+  /// 付款单号
+  @Json(name: 'aaz031')
+  int payList;
+
+  /// 支付总金额
+  @Json(name: 'aae019')
+  num payAmount;
 }
