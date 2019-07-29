@@ -17,6 +17,7 @@ dependencies:
   intl: ^0.15.8
   icu4dart:
     path: ../icu4dart
+  decimal: ^0.3.3
 
 dev_dependencies:
   pedantic: ^1.0.0

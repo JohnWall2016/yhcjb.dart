@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:yhcjb/src/net/session.dart';
 import 'package:yhcjb/yhcjb.dart';
 import 'package:xlsx_decoder/xlsx_decoder.dart' as xlsx;
@@ -88,7 +89,7 @@ jbPayment(String yearMonth, String state) {
           ..cell('D').setValue(type)
           ..cell('E').setValue(payment.payList)
           ..cell('F').setValue(amount)
-          ..cell('G').setValue(getMoneyCh(amount))
+          ..cell('G').setValue(getMoneyCh(Decimal.parse(amount.toStringAsFixed(2))))
           ..cell('H').setValue(data.paidName)
           ..cell('I').setValue(data.paidAccount)
           ..cell('J').setValue(bankName);

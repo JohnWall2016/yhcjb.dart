@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'dart:math' as math;
+import 'package:decimal/decimal.dart';
 
 stop(String message, [int code = -1]) {
   print(message);
@@ -108,8 +109,8 @@ const _unit = [
 
 const _whole = '整';
 
-String getMoneyCh(num number) {
-  var n = (number * 100).toInt();
+String getMoneyCh(Decimal number) {
+  var n = (number * Decimal.fromInt(100)).toInt();
   var integer = n ~/ 100;
   var fraction = n % 100;
 
