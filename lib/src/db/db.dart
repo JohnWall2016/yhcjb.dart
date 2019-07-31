@@ -22,9 +22,9 @@ class Database {
   Map<String, dynamic> _models = {};
 
   Model<T> getModel<T>(String name) {
-    if (_models.containsValue(name))
+    if (_models.containsValue(name)) {
       return _models[name];
-    else {
+    } else {
       var model = Model<T>._(this, name);
       _models[name] = model;
       return model;
@@ -267,8 +267,9 @@ class Model<T> {
     buf.write('`$name` ');
     buf.write('(');
     buf.write(defineFields.join(', '));
-    if (primaryKeys != null && primaryKeys.isNotEmpty)
+    if (primaryKeys != null && primaryKeys.isNotEmpty) {
       buf.write(', primary key ($primaryKeys)');
+    }
     buf.write(')');
 
     return buf.toString();
@@ -388,10 +389,11 @@ abstract class SqlStmt {
   static String getValue(Model model, value) {
     if (value is String)
       return "'$value'";
-    else if (value is SqlStmt)
+    else if (value is SqlStmt) {
       return '(${value.toSql(model)})';
-    else
+    } else {
       return value.toString();
+    }
   }
 }
 

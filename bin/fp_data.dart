@@ -134,7 +134,7 @@ Iterable<FpRawData> fetchPkData(
     if (row != null) {
       String name = row.cell('H').value();
       String idcard = row.cell('I').value();
-      idcard = idcard.trim().substring(0, 18);
+      idcard = idcard.trim().substring(0, 18).toUpperCase();
       String birthDay = idcard.substring(6, 14);
       String xzj = row.cell('C').value();
       String csq = row.cell('D').value();
@@ -162,7 +162,7 @@ Iterable<FpRawData> fetchTkData(
     if (row != null) {
       String name = row.cell('G').value();
       String idcard = row.cell('H').value();
-      idcard = idcard.trim().substring(0, 18);
+      idcard = idcard.trim().substring(0, 18).toUpperCase();
       String birthDay = idcard.substring(6, 14);
       String xzj = row.cell('C').value();
       String csq = row.cell('D').value();
@@ -219,11 +219,10 @@ Iterable<FpRawData> fetchCsdbData(
               ..date = date;
             if (type == '全额救助' || type == '全额') {
               fpdata.type = '全额低保人员';
-              yield fpdata;
             } else {
               fpdata.type = '差额低保人员';
-              yield fpdata;
             }
+            yield fpdata;
           }
         }
       }
@@ -294,12 +293,12 @@ Iterable<FpRawData> fetchCjData(
     if (row != null) {
       String name = row.cell('A').value();
       String idcard = row.cell('B').value();
-      idcard = idcard.trim().substring(0, 18);
+      idcard = idcard.trim().substring(0, 18).toUpperCase();
       String birthDay = idcard.substring(6, 14);
       String xzj = row.cell('H').value();
       String csq = row.cell('I').value();
       String address = row.cell('G').value();
-      String level = row.cell('E').value();
+      String level = row.cell('L').value();
 
       var fpdata = FpRawData()
         ..name = name
