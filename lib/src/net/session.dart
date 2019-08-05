@@ -623,7 +623,7 @@ class Dyfh extends Data with PersionInfo {
     }
   }
 
-  String bz = '', fpName = '', fpType = '';
+  String bz = '', fpName = '', fpType = '', fpDate = '';
 }
 
 class BankInfoQuery extends Parameters {

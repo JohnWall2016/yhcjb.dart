@@ -11,17 +11,17 @@ main(List<String> args) {
 
   program.command('fphd')
     ..setDescription('从业务系统下载生成到龄贫困人员待遇核定情况表')
-    ..setArguments('<date>', {'date': 'yyyymmdd'})
+    ..setArguments('<date>', {'date': '截至到龄日期，格式：yyyymmdd'})
     ..setAction((List args) => fphd(args));
 
   program.command('download')
     ..setDescription('从业务系统下载信息核对报告表')
-    ..setArguments('<date>', {'date': 'yyyymmdd'})
+    ..setArguments('<date>', {'date': '报表生成日期，格式：yyyymmdd'})
     ..setAction((List args) => download(args));
 
   program.command('split')
     ..setDescription('对下载的信息表分组并生成养老金计算表')
-    ..setArguments('<date> <beginRow> <endRow>', {'date': 'yyyymmdd'})
+    ..setArguments('<date> <beginRow> <endRow>', {'date': '报表生成日期，格式：yyyymmdd'})
     ..setAction((List args) => split(args));
 
   program.parse(args);
@@ -106,18 +106,19 @@ void download(List args) async {
     var model = db.getModel<FpRawData>('2019年度扶贫办民政残联历史数据');
     for (var data in result.datas) {
       var idcard = data.idcard;
-      //var date = int.parse(idcard.substring(6, 12)) + 6000;
 
-      var records = await model.select(And([
-        Eq(#idcard, idcard),
-        Or.Eq(#type, ['贫困人口', '特困人员', '全额低保人员', '差额低保人员']),
-        //Gte(#date, date.toString())
-      ]));
+      var records = await model.select(
+          And([
+            Eq(#idcard, idcard),
+            Or.Eq(#type, ['贫困人口', '特困人员', '全额低保人员', '差额低保人员'])
+          ]),
+          order: Order([By(#date)]));
       if (records.isNotEmpty) {
         var record = records.first;
         data.bz = '按人社厅发〔2018〕111号文办理';
         data.fpName = record.name;
         data.fpType = record.type;
+        data.fpDate = record.date;
       }
     }
     await db.close();
@@ -142,7 +143,8 @@ void download(List args) async {
         ..cell('J').setValue('否 [ ]')
         ..cell('L').setValue(data.bz)
         ..cell('M').setValue(data.fpType)
-        ..cell('N').setValue(data.fpName);
+        ..cell('N').setValue(data.fpDate)
+        ..cell('O').setValue(data.fpName);
     }
     workbook.toFile(saveXlsx);
   }

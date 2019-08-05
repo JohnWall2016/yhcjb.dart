@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:mirrors';
 
+import 'package:decimal/decimal.dart';
 import 'package:yhcjb/yhcjb.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
@@ -65,6 +66,7 @@ main() {
 
   print(getMoneyCh(12325002652306.01));
 */
+/*
   var collator = Collator('zh');
   var list = [
     "长城乡",
@@ -84,6 +86,29 @@ main() {
   list.sort((first, second) => collator.compare(first, second));
   print(list);
   collator.close();
+*/
+/*
+  var s = '长城乡';
+
+  for (var c in s.split('')) {
+    print(c);
+  }
+
+  for (var c in s.codeUnits) {
+    print(c);
+  }
+
+  var len = s.length;
+  print(len);
+
+  for (var i = 0; i < len; i++) {
+    print(s[i]);
+  }
+*/
+  //print(getMoneyCh(Decimal.parse('1046.61')));
+
+  print(1024.61 * 100);
+  print((1024.62 * 100).toInt());
 }
 
 typedef FunctionWithMap = dynamic Function(Map<String, String> args);

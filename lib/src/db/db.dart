@@ -129,11 +129,14 @@ class Model<T> {
     return db.getModel<T>(name);
   }
 
-  selectSql(SqlStmt condition, {int limit, int offset}) {
+  selectSql(SqlStmt condition, {Order order, int limit, int offset}) {
     var buf = StringBuffer();
     buf..write('select ')..write(names.join(','))..write(' from ')..write(name);
     if (condition != null) {
       buf..write(' where ')..write(condition.toSql(this));
+    }
+    if (order != null) {
+      buf..write(' ')..write(order.toSql(this));
     }
     if (limit != null) {
       buf.write(' limit $limit');
@@ -275,7 +278,7 @@ class Model<T> {
     return buf.toString();
   }
 
-  Future<Iterable<T>> select(SqlStmt condition, {int limit, int offset}) async {
+  Future<Iterable<T>> select(SqlStmt condition, {Order order, int limit, int offset}) async {
     var result =
         await _db.query(selectSql(condition, limit: limit, offset: offset));
 
@@ -465,4 +468,29 @@ class And extends SqlRel {
 class Or extends SqlRel {
   Or(Iterable<SqlStmt> cmps) : super(' or ', cmps);
   Or.Eq(field, List value) : this(value.map((v) => Eq(field, v)));
+}
+
+class By {
+  dynamic field;
+  bool asc;
+
+  By(this.field, {this.asc = true});
+}
+
+class Order extends SqlStmt {
+  List<By> _fields = [];
+
+  Order(List<By> fields) : _fields = fields ?? [];
+
+  String toSql(Model model) {
+    if (_fields.isEmpty) {
+      return '';
+    }
+    return (StringBuffer()
+          ..write('order by ')
+          ..write(_fields.map((f) {
+            return model.getFieldName(f.field) + (f.asc ? ' asc' : ' desc');
+          }).join(', ')))
+        .toString();
+  }
 }

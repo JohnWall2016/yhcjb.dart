@@ -1,4 +1,5 @@
 import 'package:yhcjb/yhcjb.dart';
+import 'package:yhcjb/yhcjb.dart' as prefix0;
 
 main() async {
   /*var model = Model<FpHistoryData>(null);
@@ -37,8 +38,22 @@ main() async {
   print(model.createTableSql(ifNotExists: false));
   await model.createTable(ifNotExists: false);
   await db.close();*/
-  var to = FpData()..idcard = '12345';
+  /*var to = FpData()..idcard = '12345';
   var from = FpData()..idcard = '23456'..name = '刘德华';
   Model.unionTo(from, to);
-  print('${to.idcard} ${to.name}');
+  print('${to.idcard} ${to.name}');*/
+
+  var db = await getFpDatabase();
+  var model = db.getModel<FpRawData>('2019年度扶贫办民政残联历史数据');
+
+  print(Order([By(#date), By(#name, asc: false)]).toSql(model));
+
+  print(model.selectSql(
+      And([
+        Eq(#idcard, '12345'),
+        Or.Eq(#type, ['贫困人口', '特困人员', '全额低保人员', '差额低保人员'])
+      ]),
+      order: Order([By(#date, asc: false)])));
+
+  await db.close();
 }
