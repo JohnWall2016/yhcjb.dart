@@ -2,6 +2,7 @@ import 'package:yhcjb/yhcjb.dart';
 import 'package:xlsx_decoder/xlsx_decoder.dart' as xlsx;
 import 'package:path/path.dart' as p;
 import 'package:commander/commander.dart';
+import 'dart:io';
 
 const jbsfMap = {
   '贫困人口一级': '051',
@@ -74,12 +75,13 @@ jbCbsh(String qsshsj, String jzshsj) async {
       await conn.close();
     }
     if (export) {
-      workbook.toFile(p.join(
-          dir,
-          '批量信息变更模板' +
-              qsshsj +
-              (jzshsj != null ? '_' + jzshsj : '') +
-              '.xlsx'));
+      var path = p.join(dir,
+          '批量信息变更模板' + qsshsj + (jzshsj != null ? '_' + jzshsj : '') + '.xlsx');
+      var file = File(path);
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+      workbook.toFile(path);
     }
   }
 }
