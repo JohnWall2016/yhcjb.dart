@@ -387,7 +387,7 @@ class CbshQuery extends PageParameters {
   String shzt = ""; // "1";
 
   CbshQuery({this.qsshsj = '', this.jzshsj = '', this.shzt = ''})
-      : super('cbshQuery');
+      : super('cbshQuery', pageSize: 500);
 }
 
 class Cbsh extends Data with PersionInfo, Address, Ywjbsh {}

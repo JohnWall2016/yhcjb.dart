@@ -50,7 +50,9 @@ jbCbsh(String qsshsj, String jzshsj) async {
   });
 
   var export = false;
-  if (result.length > 0) {
+  var len = result.length;
+  print(len);
+  if (len > 0) {
     var workbook = xlsx.Workbook.fromFile(p.join(dir, template));
     var sheet = workbook.sheetAt(0);
     int index = 2, copyIndex = 2;
