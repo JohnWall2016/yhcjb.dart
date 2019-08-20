@@ -176,3 +176,34 @@ String appendToFileName(String fileName, String appendString) {
     return fileName + appendString;
   }
 }
+
+String padZero(int num, [digit = 2]) {
+  var pad = StringBuffer();
+  while (--digit > 0) {
+    var limit = math.pow(10, digit);
+    if (num >= limit) {
+      break;    
+    } else {
+      pad.write('0');
+    }
+  }
+  pad.write(num);
+  return pad.toString();
+}
+
+int previousMonth(int yearMonth) {
+  var y = yearMonth ~/ 100;
+  var m = yearMonth % 100;
+  m -= 1;
+  if (m == 0) {
+    m = 12;
+    y -= 1;
+  }
+  return y * 100 + m;
+}
+
+int substractMonth(int firstYearMonth, int secondYearMonth) {
+  var firstMonths = (firstYearMonth ~/ 100) * 12 + firstYearMonth % 100;
+  var secondMonths = (secondYearMonth ~/ 100) * 12 + secondYearMonth % 100;
+  return firstMonths - secondMonths;
+}

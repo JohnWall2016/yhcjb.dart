@@ -1,4 +1,4 @@
-import 'package:yhcjb/src/net/session.dart';
+import 'package:yhcjb/yhcjb.dart';
 
 main() {
   /*print(GrinfoQuery('430311195702091516').toJson());
@@ -28,10 +28,19 @@ main() {
       print(pinfo[2]);
     }
   });*/
-
+/*
   Session.use((s) {
     //print(CwzfglQuery('201905', '1'));
-    s.sendService(CwzfglQuery('201905', '1'));
+    //s.sendService(CwzfglQuery('201905', '1'));
+    //print(s.readHttpBody());
+    /*s.sendService(PausePaymentQuery('430302191912225020'));
+    //print(s.readHttpBody());
+    var result = s.getResult<PausePayment>();
+    var pause = result.datas[0];
+    print([pause.idcard, pause.name, pause.reasonChn, pause.time]);*/
+    s.sendService(SuspiciousDeathQuery('360312193511161015'));
     print(s.readHttpBody());
   });
+  */
+  print(padZero(10, 10));
 }

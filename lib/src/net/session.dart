@@ -302,6 +302,9 @@ abstract class PersionInfo {
   /// 参保身份
   @Json(name: 'aac066')
   String cbsf;
+
+  /// 居保状态
+  String get jbzt => _jbzt(cbzt, jfzt);
 }
 
 abstract class ExtraInfo {
@@ -333,6 +336,9 @@ abstract class Address {
   /// 村社区名称
   @Json(name: "aaf103")
   String csmc;
+
+  /// 单位名称
+  String get dwmc => _xzqhMap[xzqh.substring(0, 9)] ?? '';
 }
 
 /// 业务经办审核
@@ -1102,4 +1108,103 @@ class Dfpayffzfdjgrmx extends Data {
   /// 支付总金额
   @Json(name: 'aae019')
   num payAmount;
+}
+
+const _xzqhMap = {
+  "43030200": "代发虚拟乡镇",
+  "43030201": "长城乡",
+  "43030202": "昭潭街道",
+  "43030203": "先锋街道",
+  "43030204": "万楼街道",
+  "43030205": "（原）鹤岭镇",
+  "43030206": "楠竹山镇",
+  "43030207": "姜畲镇",
+  "43030208": "鹤岭镇",
+  "43030209": "城正街街道",
+  "43030210": "雨湖路街道",
+  "43030211": "（原）平政路街道",
+  "43030212": "云塘街道",
+  "43030213": "窑湾街道",
+  "43030214": "（原）窑湾街道",
+  "43030215": "广场街道",
+  "43030216": "（原）羊牯塘街道"
+};
+
+/// 待遇暂停查询
+class PausePaymentQuery extends PageParameters {
+  String aaf013 = '', aaz070 = '';
+
+  /// 身份证号码
+  @Json(name: "aac002")
+  String idcard = "";
+
+  String aae141 = '', aae141s = '';
+
+  /// 审核状态: '1' - 已审核; '0' - 未审核
+  @Json(name: "aae016")
+  String audited = "";
+
+  String aae036 = '', aae036s = '', aac009 = '';
+
+  String aae015 = '', aae015s = '', aae116 = '';
+
+  PausePaymentQuery(this.idcard, [this.audited = ''])
+      : super('queryAllPausePersonInfosForAuditService');
+}
+
+class PausePayment extends Data with BaseInfo {
+  /// 暂停时间
+  @Json(name: 'aae141')
+  int time;
+
+  /// 暂停原因
+  @Json(name: 'aae160')
+  String reason;
+
+  /// 备注
+  @Json(name: 'aae013')
+  String memo;
+
+  String get reasonChn => _pausePaymentChn(reason);
+}
+
+String _pausePaymentChn(String reason) {
+  switch (reason) {
+    case "1299":
+      return "其他原因暂停养老待遇";
+    case "1200":
+      return "养老保险待遇暂停";
+    case "1201":
+      return "养老待遇享受人员未提供生存证明";
+    default:
+      return '其它未知类型${reason}';
+  }
+}
+
+/// 疑似死亡
+class SuspiciousDeathQuery extends PageParameters {
+  String aac003 = '', aae037s = '', aae037e = '';
+
+  /// 身份证号码
+  @Json(name: "aac002")
+  String idcard = "";
+
+  String aaf013 = '', aaf101 = '', aac008 = '';
+  String hsbz = '';
+
+  SuspiciousDeathQuery(this.idcard) : super('dsznswcxQuery');
+}
+
+class SuspiciousDeath extends Data with BaseInfo {
+  @Json(name: 'aae036')
+  String compareTime;
+
+  @Json(name: 'aae037')
+  int deathTime;
+
+  @Json(name: 'aac008')
+  String jbzt;
+
+  @Json(name: 'bz')
+  String memo;
 }
