@@ -53,21 +53,21 @@ inherit(List args) {
       var row = sheet.rowAt(i);
       String idcard = row.cell('B').value();
       
-      print('$row $idcard');
+      print('$i $idcard');
 
       session.sendService(GrinfoQuery(idcard));
       var result = session.getResult<Grinfo>();
       if (result.isNotEmpty) {
         var info = result.datas[0];
 
-        print('${info.czmc}|${info.dwmc}|${info.jbzt}');
+        print('${info.czmc}|${info.xzqh}|${info.dwmc}|${info.jbzt}');
 
         row.cell('C').setValue(info.name);
         row.cell('E').setValue(info.czmc);
         row.cell('F').setValue(info.dwmc);
         row.cell('G').setValue(info.jbzt);
 
-        var deathTime = row.cell('D').value();
+        String deathTime = row.cell('D').value();
 
         session.sendService(PausePaymentQuery(idcard));
         var result2 = session.getResult<PausePayment>();
@@ -98,9 +98,9 @@ inherit(List args) {
         if (result3.isNotEmpty) {
           var sdeath = result3.datas[0];
           var sdeathTime = sdeath.deathTime ~/ 100;
-          row.cell('M').setValue(deathTime);
+          row.cell('M').setValue(sdeathTime);
           try {
-            var delta = substractMonth(deathTime, sdeathTime);
+            var delta = substractMonth(int.parse(deathTime), sdeathTime);
 
             print('${deathTime} - ${sdeathTime} = ${delta}');
 

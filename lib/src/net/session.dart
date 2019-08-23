@@ -338,7 +338,9 @@ abstract class Address {
   String csmc;
 
   /// 单位名称
-  String get dwmc => _xzqhMap[xzqh.substring(0, 9)] ?? '';
+  String get dwmc {
+    return _xzqhMap[xzqh.substring(0, 8)] ?? '';
+  }
 }
 
 /// 业务经办审核
