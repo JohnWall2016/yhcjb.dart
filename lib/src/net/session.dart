@@ -482,11 +482,11 @@ class Dyry extends Data {
     var year = int.parse(birthDay.substring(0, 4));
     var month = int.parse(birthDay.substring(4, 6));
     year = year - 1951;
-    if (year >= 15)
+    if (year >= 15) {
       return 15;
-    else if (year < 0)
+    } else if (year < 0) {
       return 0;
-    else if (year == 0) {
+    } else if (year == 0) {
       if (month >= 7) return 1;
       return 0;
     } else {
