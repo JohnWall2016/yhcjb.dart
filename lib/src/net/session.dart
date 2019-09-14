@@ -17,7 +17,7 @@ class Session extends SyncSocket {
         _password = password,
         super(host, port);
 
-  _createRequest() {
+  HttpRequest _createRequest() {
     var request = HttpRequest('/hncjb/reports/crud', method: 'POST')
       ..addHeader('Host', url)
       ..addHeader('Connection', 'keep-alive')

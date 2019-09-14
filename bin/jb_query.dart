@@ -23,10 +23,10 @@ main(List<String> args) {
       'endRow': '数据结束行(包含)',
       'idcardCol': '身份证号码所在列',
       'infoSaveCol': '居保参保信息保存列',
-    })..setAction((Map args) => upinfo(args));
+    })
+    ..setAction((Map args) => upinfo(args));
 
   program.parse(args);
-
 }
 
 doc(List args) {
@@ -62,7 +62,7 @@ inherit(List args) {
     for (var i = start; i <= end; i++) {
       var row = sheet.rowAt(i);
       String idcard = row.cell('B').value();
-      
+
       print('$i $idcard');
 
       session.sendService(GrinfoQuery(idcard));
@@ -84,14 +84,16 @@ inherit(List args) {
         if (result2.isNotEmpty) {
           var pause = result2.datas[0];
 
-          print('${pause.idcard}|${pause.name}|${pause.time}|${pause.reasonChn}|${pause.memo}');
+          print(
+              '${pause.idcard}|${pause.name}|${pause.time}|${pause.reasonChn}|${pause.memo}');
 
           row.cell('H').setValue('暂停');
           var pauseTime = pause.time;
           row.cell('I').setValue(pauseTime);
 
           try {
-            var delta = substractMonth(int.parse(deathTime), previousMonth(pauseTime));
+            var delta =
+                substractMonth(int.parse(deathTime), previousMonth(pauseTime));
 
             print('${deathTime} - ${pauseTime} + 1 = ${delta}');
 
@@ -150,7 +152,7 @@ upinfo(Map args) {
         row.cell(saveRow).setValue(jbzt);
       }
 
-      print('$idcard ${jbzt??''}');
+      print('$idcard ${jbzt ?? ''}');
     }
   });
   workbook.toFile(appendToFileName(file, '.upd'));

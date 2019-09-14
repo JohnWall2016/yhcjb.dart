@@ -157,6 +157,7 @@ class HttpRequest {
   }
 
   void addHeader(String key, String value) => _header.add(key, value);
+  
   void addBody(String buf) {
     var bytes = encoding.encode(buf);
     _body.add(bytes);
