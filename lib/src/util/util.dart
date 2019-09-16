@@ -167,7 +167,7 @@ String getMoneyCh(Decimal number) {
 }
 
 String appendToFileName(String fileName, String appendString) {
-  var index = fileName.indexOf('.');
+  var index = fileName.lastIndexOf('.');
   if (index >= 0) {
     return fileName.substring(0, index) +
         appendString +
