@@ -84,9 +84,7 @@ class SyncSocket {
     if (header == null) {
       header = readHttpHeader();
     }
-    if (header['Transfer-Encoding']
-            ?.firstWhere((value) => value == 'chunked') !=
-        null) {
+    if (header['Transfer-Encoding']?.contains('chunked') ?? false) {
       while (true) {
         var len = int.parse(readLine(), radix: 16);
         if (len <= 0) {
@@ -157,7 +155,7 @@ class HttpRequest {
   }
 
   void addHeader(String key, String value) => _header.add(key, value);
-  
+
   void addBody(String buf) {
     var bytes = encoding.encode(buf);
     _body.add(bytes);
