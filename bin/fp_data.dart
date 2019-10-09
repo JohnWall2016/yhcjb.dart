@@ -90,7 +90,7 @@ main(List<String> args) {
   program.command('drjb')
     ..setDescription('导入居保参保人员明细表')
     ..setArguments(
-        '<xlsx> <beginRow> <endRow> [\'recreate\']', {'date': 'yyyymm'})
+        '<xlsx> <beginRow> <endRow> [\'recreate\']')
     ..setAction((List args) {
       var recreate = false;
       if (args.length > 3 && args[3] == 'recreate') recreate = true;
@@ -99,14 +99,16 @@ main(List<String> args) {
 
   program.command('jbzt')
     ..setDescription('更新居保参保状态')
-    ..setArguments('<tabeName> <date>', {'date': 'yyyymm'})
+    ..setArguments('<tabeName> <date>', 
+        {'tableName': '表名称，例如：2019年度扶贫历史数据底册, 201905扶贫数据底册', 'date': 'yyyymm'})
     ..setAction((List args) {
       updateJbzt(args[0], args[1]);
     });
 
   program.command('dcsj')
     ..setDescription('导出扶贫底册数据')
-    ..setArguments('<tabeName>')
+    ..setArguments('<tabeName>',
+        {'tableName': '表名称，例如：2019年度扶贫历史数据底册, 201905扶贫数据底册'})
     ..setAction((List args) {
       var tableName = args[0];
       var tmplXlsx = 'D:\\精准扶贫\\雨湖区精准扶贫底册模板.xlsx';
