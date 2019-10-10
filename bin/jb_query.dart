@@ -26,6 +26,14 @@ main(List<String> args) {
     })
     ..setAction((Map args) => upinfo(args));
 
+  program.command('jfxx')
+    ..setDescription('缴费信息查询')
+    ..setArguments('<idcard> [\'export\']', {
+      'idcard': '身份证号码',
+      '\'export\'': '导出信息表'
+    })
+    ..setAction((Map args) => jfxx(args));
+
   program.parse(args);
 }
 
@@ -156,4 +164,72 @@ upinfo(Map args) {
     }
   });
   workbook.toFile(appendToFileName(file, '.upd'));
+}
+
+class JfxxRecord {
+  num year = 0;
+  num grjf = 0, sjbt = 0, sqbt = 0, xjbt = 0, zfdj = 0;
+  Set<String> sbjg = Set();
+  Set<String> hbrq = Set();
+
+  @override
+  String toString() {
+    return '$year $grjf $sjbt $sqbt $xjbt $zfdj ${sbjg.join('|')} ${hbrq.join('|')}';
+  }
+}
+
+jfxx(Map args) {
+  //print('${args['idcard']} ${args['\'export\'']}');
+
+  String idcard = args['idcard'];
+  bool export = args['\'export\''] == 'export';
+
+  print('身份证号码: $idcard, 是否导出: $export');
+
+  Session.use((s) {
+    s.sendService(SncbqkcxjfxxQuery(idcard));
+    var result = s.getResult<Sncbqkcxjfxx>();
+    //print(result.toJson(true));
+    if (result.isEmpty || (result.length == 1 && result[0].year == null)) {
+      print('未查询到缴费信息');
+    } else {
+      Map<int, JfxxRecord> records = {};
+      for (var data in result.datas) {
+        if (data.year != null && data.isTransfered) {
+          JfxxRecord record = records[data.year];
+          if (record == null) {
+             record = JfxxRecord()..year = data.year;
+             records[data.year] = record;
+          }
+          switch (data.item.value) {
+            case '1': // 个人缴费
+              record.grjf += data.amount;
+              break;
+            case '3': // 省级财政补贴
+              record.sjbt += data.amount;
+              break;
+            case '4': // 市级财政补贴
+              record.sqbt += data.amount;
+              break;
+            case '5': // 县级财政补贴
+              record.xjbt += data.amount;
+              break;
+            case '11': // 政府代缴
+              record.zfdj += data.amount;
+              break;
+            default:
+              throw '未知缴费类型';
+          }
+          record.sbjg.add(data.agency); // 社保机构
+          record.hbrq.add(data.transferDate); // 划拨日期
+        }
+      }
+      var keys = records.keys.toList();
+      keys.sort();
+      var len = keys.length;
+      for (var i = 0;  i < len; ++i) {
+        print('${i+1}. ${records[keys[i]]}');
+      }
+    }
+  });
 }

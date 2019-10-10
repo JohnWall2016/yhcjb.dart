@@ -747,7 +747,7 @@ class Sncbqkcxjfxx extends Data {
   String transferDate;
 
   /// 是否已划拨
-  bool get isTransfer => transferDate != null;
+  bool get isTransfered => transferDate != null;
 
   /// 社保机构
   @Json(name: 'aaa027')
