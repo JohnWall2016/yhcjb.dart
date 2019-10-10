@@ -10,13 +10,38 @@ class Json {
 
 final JsonableType = reflectType(Jsonable);
 
+abstract class CustomField<T> {
+  T value;
+}
+
+abstract class MappingField<F, T> extends CustomField<F> {
+  Map<F, T> mapping;
+  String Function() notMatch;
+
+  MappingField(mapping, {notMatch}) {
+    this.mapping = mapping ?? {};
+    this.notMatch = notMatch ?? () => 'NotMatch: $value';
+  }
+  
+  T map(F value) => mapping[value];
+
+  @override
+  String toString() => '${map(value) ?? notMatch()}';
+}
+
+mixin ToAlias {}
+
+abstract class StringMappingField = MappingField<String, String> with ToAlias;
+
+final CustomFieldType = reflectType(CustomField);
+
 class Jsonable {
   static T fromJson<T extends Jsonable>(String json) {
     return fromMap<T>(convert.json.decode(json));
   }
 
-  String toJson() {
-    return convert.json.encode(toMap());
+  String toJson([bool rawName = false]) {
+    return convert.json.encode(toMap(rawName));
   }
 
   static T fromMap<T extends Jsonable>(Map<String, dynamic> map) {
@@ -40,9 +65,9 @@ class Jsonable {
             orElse: () => null);
         if (meta != null) {
           Json json = meta.reflectee;
-          if (json.ignored != null && json.ignored)
+          if (json.ignored != null && json.ignored) {
             return;
-          else if (json.name != null && json.name.isNotEmpty) {
+          } else if (json.name != null && json.name.isNotEmpty) {
             name = json.name;
           }
         }
@@ -81,16 +106,20 @@ class Jsonable {
             inst.setField(sName, argInst.reflectee);
           } else if (reflectType(value.runtimeType).isAssignableTo(type)) {
             inst.setField(sName, value);
+          } else if (type.isSubtypeOf(CustomFieldType)) {
+            var argInst = (type as ClassMirror).newInstance(Symbol(''), []);
+            argInst.setField(Symbol('value'), value);
+            inst.setField(sName, argInst.reflectee);
           }
         }
       }
     });
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap([bool rawName = false]) {
     InstanceMirror inst = reflect(this);
     Map<String, dynamic> map = {};
-    _toMap(inst, inst.type, map);
+    _toMap(inst, inst.type, map, rawName);
     return map;
   }
 
@@ -104,28 +133,30 @@ class Jsonable {
     } else if (value is Map) {
       return value.map((k, v) => MapEntry(k, _getValue(v)));
     } else {
-      return null;
+      return value.toString();
     }
   }
 
-  void _toMap(
-      InstanceMirror inst, ClassMirror clazz, Map<String, dynamic> map) {
+  void _toMap(InstanceMirror inst, ClassMirror clazz, Map<String, dynamic> map,
+      [bool rawName = false]) {
     if (!clazz.isSubtypeOf(reflectType(Jsonable))) return;
 
-    _toMap(inst, clazz.superclass, map);
+    _toMap(inst, clazz.superclass, map, rawName);
 
     clazz.declarations.values.forEach((decl) {
       if (decl is VariableMirror) {
         String name;
-        var meta = decl.metadata.firstWhere(
-            (metadataMirror) => metadataMirror.reflectee is Json,
-            orElse: () => null);
-        if (meta != null) {
-          Json json = meta.reflectee;
-          if (json.ignored != null && json.ignored)
-            return;
-          else if (json.name != null && json.name.isNotEmpty) {
-            name = json.name;
+        if (!rawName) {
+          var meta = decl.metadata.firstWhere(
+              (metadataMirror) => metadataMirror.reflectee is Json,
+              orElse: () => null);
+          if (meta != null) {
+            Json json = meta.reflectee;
+            if (json.ignored != null && json.ignored) {
+              return;
+            } else if (json.name != null && json.name.isNotEmpty) {
+              name = json.name;
+            }
           }
         }
         name ??= MirrorSystem.getName(decl.simpleName);

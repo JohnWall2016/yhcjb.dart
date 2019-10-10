@@ -234,6 +234,7 @@ class GrinfoQuery extends PageParameters {
   }
 }
 
+/// 省内参保信息查询
 class SncbxxConQuery extends Parameters {
   /// 身份证号码
   @Json(name: "aac002")
@@ -678,6 +679,86 @@ String _getBankName(String bankType) {
   return "";
 }
 
+/// 省内参保缴费信息查询
+class SncbqkcxjfxxQuery extends PageParameters {
+  /// 身份证号码
+  @Json(name: "aac002")
+  String idcard = "";
+
+  SncbqkcxjfxxQuery(this.idcard)
+      : super('executeSncbqkcxjfxxQ', page: 1, pageSize: 500);
+}
+
+/// 缴费类型
+class JfType extends StringMappingField {
+  JfType()
+      : super({
+          '10': '正常应缴',
+          '31': '补缴',
+        });
+}
+
+/// 缴费项目
+class JfItem extends StringMappingField {
+  JfItem()
+      : super({
+          '1': '个人缴费',
+          '3': '省级财政补贴',
+          '4': '市级财政补贴',
+          '5': '县级财政补贴',
+          '11': '政府代缴',
+        });
+}
+
+/// 缴费方式
+class JfMethod extends StringMappingField {
+  JfMethod()
+      : super({
+          '2': '银行代收',
+          '3': '经办机构自收',
+        });
+}
+
+/// 省内参保缴费信息
+class Sncbqkcxjfxx extends Data {
+  /// 缴费年度
+  @Json(name: 'aae003')
+  int year;
+
+  /// 备注
+  @Json(name: 'aae013')
+  String memo;
+
+  /// 金额
+  @Json(name: 'aae022')
+  num amount;
+
+  @Json(name: 'aaa115')
+  JfType type;
+
+  @Json(name: 'aae341')
+  JfItem item;
+
+  @Json(name: 'aab033')
+  JfMethod method;
+
+  /// 划拨日期
+  @Json(name: 'aae006')
+  String transferDate;
+
+  /// 是否已划拨
+  bool get isTransfer => transferDate != null;
+
+  /// 社保机构
+  @Json(name: 'aaa027')
+  String agency;
+
+  /// 行政区划代码
+  @Json(name: 'aaf101')
+  String xzqh;
+}
+
+/// 财务支付管理查询
 class CwzfglQuery extends PageParameters {
   String aaa121 = '', aaz031 = '';
 

@@ -42,5 +42,18 @@ main() {
     print(s.readHttpBody());
   });
   */
-  print(padZero(10, 10));
+  // print(padZero(10, 10));
+  Session.use((s) {
+    s.sendService(SncbqkcxjfxxQuery('430122195709247411'));//'430303195909191071'));
+    //print(s.readHttpBody());
+    var result = s.getResult<Sncbqkcxjfxx>();
+    for (var data in result.datas) {
+      /*print(data.memo);
+      print(data.type);
+      print(data.item);
+      print(data.amount);*/
+      //print(data);
+      print(data.toJson(true));
+    }
+  });
 }
