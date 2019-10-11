@@ -198,6 +198,7 @@ jfxx(Map args) {
     var sbjg = info.sbjg;
     var czmc = info.czmc;
     var jbsj = info.jbsj;
+    print('个人信息:');
     print('$name $idcard $czmc $sbjg $jbsj\n');
 
     s.sendService(SncbqkcxjfxxQuery(idcard));
@@ -253,9 +254,11 @@ jfxx(Map args) {
           print('${i + 1}. ${transferedRecords[keys[i]]}');
         }
       }
-
+      
       printJfxxRecords(transferedRecords, '已拨付缴费历史记录:');
-      printJfxxRecords(untransferedRecords, '\n未拨付补录入记录:');
+      if (untransferedRecords.isNotEmpty) {
+        printJfxxRecords(untransferedRecords, '\n未拨付补录入记录:');
+      }
     }
   });
 }
