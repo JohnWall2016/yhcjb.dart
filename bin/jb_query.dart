@@ -28,10 +28,8 @@ main(List<String> args) {
 
   program.command('jfxx')
     ..setDescription('缴费信息查询')
-    ..setArguments('<idcard> [\'export\']', {
-      'idcard': '身份证号码',
-      '\'export\'': '导出信息表'
-    })
+    ..setArguments(
+        '<idcard> [\'export\']', {'idcard': '身份证号码', '\'export\'': '导出信息表'})
     ..setAction((Map args) => jfxx(args));
 
   program.parse(args);
@@ -174,7 +172,9 @@ class JfxxRecord {
 
   @override
   String toString() {
-    return '$year $grjf $sjbt $sqbt $xjbt $zfdj ${sbjg.join('|')} ${hbrq.join('|')}';
+    return '$year'.padLeft(4) + '$grjf'.padLeft(9) + '$sjbt'.padLeft(9) +
+      '$sqbt'.padLeft(9) + '$xjbt'.padLeft(9) + '$zfdj'.padLeft(9) +
+      '  ${sbjg.join('|')} ${hbrq.join('|')}';
   }
 }
 
@@ -184,22 +184,38 @@ jfxx(Map args) {
   String idcard = args['idcard'];
   bool export = args['\'export\''] == 'export';
 
-  print('身份证号码: $idcard, 是否导出: $export');
+  print('身份证号码: $idcard, 是否导出: $export\n');
 
   Session.use((s) {
+    s.sendService(SncbxxConQuery(idcard));
+    var infos = s.getResult<SncbxxCon>();
+    if (infos.isEmpty) {
+      print('未查到参保记录');
+      return;
+    }
+    var info = infos[0];
+    var name = info.name;
+    var sbjg = info.sbjg;
+    var czmc = info.czmc;
+    var jbsj = info.jbsj;
+    print('$name $idcard $czmc $sbjg $jbsj\n');
+
     s.sendService(SncbqkcxjfxxQuery(idcard));
     var result = s.getResult<Sncbqkcxjfxx>();
     //print(result.toJson(true));
     if (result.isEmpty || (result.length == 1 && result[0].year == null)) {
       print('未查询到缴费信息');
     } else {
-      Map<int, JfxxRecord> records = {};
+      Map<int, JfxxRecord> transferedRecords = {};
+      Map<int, JfxxRecord> untransferedRecords = {};
       for (var data in result.datas) {
-        if (data.year != null && data.isTransfered) {
+        if (data.year != null) {
+          var records =
+              data.isTransfered ? transferedRecords : untransferedRecords;
           JfxxRecord record = records[data.year];
           if (record == null) {
-             record = JfxxRecord()..year = data.year;
-             records[data.year] = record;
+            record = JfxxRecord()..year = data.year;
+            records[data.year] = record;
           }
           switch (data.item.value) {
             case '1': // 个人缴费
@@ -220,16 +236,26 @@ jfxx(Map args) {
             default:
               throw '未知缴费类型';
           }
-          record.sbjg.add(data.agency); // 社保机构
-          record.hbrq.add(data.transferDate); // 划拨日期
+          record.sbjg.add(data.agency ?? ''); // 社保机构
+          record.hbrq.add(data.transferDate ?? ''); // 划拨日期
         }
       }
-      var keys = records.keys.toList();
-      keys.sort();
-      var len = keys.length;
-      for (var i = 0;  i < len; ++i) {
-        print('${i+1}. ${records[keys[i]]}');
+
+      printJfxxRecords(Map<int, JfxxRecord> records, String message) {
+        var keys = records.keys.toList();
+        keys.sort();
+        var len = keys.length;
+        print(message);
+        print('年度'.padLeft(5) + '个人缴费'.padLeft(5) + '省级补贴'.padLeft(5) +
+          '市级补贴'.padLeft(5) + '县级补贴'.padLeft(5) + '政府代缴'.padLeft(5) +
+          '  社保经办机构 拨付时间');
+        for (var i = 0; i < len; ++i) {
+          print('${i + 1}. ${transferedRecords[keys[i]]}');
+        }
       }
+
+      printJfxxRecords(transferedRecords, '已拨付缴费历史记录:');
+      printJfxxRecords(untransferedRecords, '\n未拨付补录入记录:');
     }
   });
 }

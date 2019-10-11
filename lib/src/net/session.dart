@@ -371,7 +371,15 @@ abstract class Ywjbsh {
 class Grinfo extends Data with PersionInfo, ExtraInfo, Address {}
 
 /// 省内参保信息
-class SncbxxCon extends Data with PersionInfo, ExtraInfo, Address {}
+class SncbxxCon extends Data with PersionInfo, ExtraInfo, Address {
+  /// 社保机构
+  @Json(name: 'aaa129')
+  String sbjg;
+
+  /// 经办时间
+  @Json(name: 'aae036')
+  String jbsj;
+}
 
 class CbshQuery extends PageParameters {
   String aaf013 = "",
