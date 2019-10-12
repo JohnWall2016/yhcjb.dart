@@ -165,17 +165,44 @@ upinfo(Map args) {
 }
 
 class JfxxRecord {
-  num year = 0;
-  num grjf = 0, sjbt = 0, sqbt = 0, xjbt = 0, zfdj = 0;
-  Set<String> sbjg = Set();
+  /// 缴费年度
+  num year;
+
+  /// 个人缴费
+  num grjf = 0;
+
+  /// 省级补贴
+  num sjbt = 0;
+
+  /// 市级补贴
+  num sqbt = 0;
+
+  /// 县级补贴
+  num xjbt = 0;
+
+  /// 政府代缴
+  num zfdj = 0;
+
+  /// 划拨日期
   Set<String> hbrq = Set();
+
+  /// 社保经办机构
+  Set<String> sbjg = Set();
 
   @override
   String toString() {
-    return '$year'.padLeft(4) + '$grjf'.padLeft(9) + '$sjbt'.padLeft(9) +
-      '$sqbt'.padLeft(9) + '$xjbt'.padLeft(9) + '$zfdj'.padLeft(9) +
-      '  ${sbjg.join('|')} ${hbrq.join('|')}';
+    return '$year'.padLeft(4) +
+        '$grjf'.padLeft(9) +
+        '$sjbt'.padLeft(9) +
+        '$sqbt'.padLeft(9) +
+        '$xjbt'.padLeft(9) +
+        '$zfdj'.padLeft(9) +
+        '   ${sbjg.join('|')} ${hbrq.join('|')}';
   }
+}
+
+class JfxxTotalRecord extends JfxxRecord {
+  num total = 0;
 }
 
 jfxx(Map args) {
@@ -189,7 +216,7 @@ jfxx(Map args) {
   Session.use((s) {
     s.sendService(SncbxxConQuery(idcard));
     var infos = s.getResult<SncbxxCon>();
-    if (infos.isEmpty) {
+    if (infos.isEmpty || infos[0].invalid) {
       print('未查到参保记录');
       return;
     }
@@ -242,22 +269,54 @@ jfxx(Map args) {
         }
       }
 
-      printJfxxRecords(Map<int, JfxxRecord> records, String message) {
-        var keys = records.keys.toList();
-        keys.sort();
-        var len = keys.length;
+      List<JfxxRecord> orderAndTotal(Map<int, JfxxRecord> records) {
+        var results = records.values.toList();
+        results.sort((p, n) => p.year - n.year);
+        var total = JfxxTotalRecord();
+        results.forEach((r) => total
+          ..grjf += r.grjf
+          ..sjbt += r.sjbt
+          ..sqbt += r.sqbt
+          ..xjbt += r.xjbt);
+        total.total = total.grjf + total.sjbt + total.sqbt + total.xjbt;
+        return results..add(total);
+      }
+
+      printJfxxRecords(List<JfxxRecord> records, String message) {
         print(message);
-        print('年度'.padLeft(5) + '个人缴费'.padLeft(5) + '省级补贴'.padLeft(5) +
-          '市级补贴'.padLeft(5) + '县级补贴'.padLeft(5) + '政府代缴'.padLeft(5) +
-          '  社保经办机构 拨付时间');
-        for (var i = 0; i < len; ++i) {
-          print('${i + 1}. ${transferedRecords[keys[i]]}');
+        print('序号'.padLeft(2) +
+            '年度'.padLeft(3) +
+            '个人缴费'.padLeft(6) +
+            '省级补贴'.padLeft(5) +
+            '市级补贴'.padLeft(5) +
+            '县级补贴'.padLeft(5) +
+            '政府代缴'.padLeft(5) +
+            '  社保经办机构 拨付时间');
+        format(JfxxRecord r) {
+          return (r is JfxxTotalRecord ? '合计' : '${r.year}'.padLeft(4)) +
+              '${r.grjf}'.padLeft(9) +
+              '${r.sjbt}'.padLeft(9) +
+              '${r.sqbt}'.padLeft(9) +
+              '${r.xjbt}'.padLeft(9) +
+              '${r.zfdj}'.padLeft(9) +
+              (r is JfxxTotalRecord
+                  ? '   总计: ${r.total}'.padLeft(9)
+                  : '   ${r.sbjg.join('|')} ${r.hbrq.join('|')}');
+        }
+
+        var i = 1;
+        for (var r in records) {
+          print('${r is JfxxTotalRecord ? '' : i++}'.padLeft(3) +
+              '  ' +
+              format(r));
         }
       }
-      
-      printJfxxRecords(transferedRecords, '已拨付缴费历史记录:');
+
+      var records = orderAndTotal(transferedRecords);
+      printJfxxRecords(records, '已拨付缴费历史记录:');
       if (untransferedRecords.isNotEmpty) {
-        printJfxxRecords(untransferedRecords, '\n未拨付补录入记录:');
+        records = orderAndTotal(untransferedRecords);
+        printJfxxRecords(records, '\n未拨付补录入记录:');
       }
     }
   });

@@ -306,6 +306,10 @@ abstract class PersionInfo {
 
   /// 居保状态
   String get jbzt => _jbzt(cbzt, jfzt);
+
+  bool get valid => idcard != null;
+
+  bool get invalid => !valid;
 }
 
 abstract class ExtraInfo {

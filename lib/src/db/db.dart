@@ -390,9 +390,9 @@ abstract class SqlStmt {
   String toSql(Model model);
 
   static String getValue(Model model, value) {
-    if (value is String)
+    if (value is String) {
       return "'$value'";
-    else if (value is SqlStmt) {
+    } else if (value is SqlStmt) {
       return '(${value.toSql(model)})';
     } else {
       return value.toString();

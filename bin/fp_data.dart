@@ -415,17 +415,19 @@ affirmIndentity(String tableName, String date, {SqlStmt condition}) async {
   var i = 1;
   for (var d in data) {
     String jbrdsf;
-    if (d.pkrk != null)
+    if (d.pkrk != null) {
       jbrdsf = '贫困人口一级';
-    else if (d.tkry != null)
+    } else if (d.tkry != null) {
       jbrdsf = '特困一级';
-    else if (d.qedb != null)
+    } else if (d.qedb != null) {
       jbrdsf = '低保对象一级';
-    else if (d.yejc != null)
+    } else if (d.yejc != null) {
       jbrdsf = '残一级';
-    else if (d.cedb != null)
+    } else if (d.cedb != null) {
       jbrdsf = '低保对象二级';
-    else if (d.ssjc != null) jbrdsf = '残二级';
+    } else if (d.ssjc != null) {
+      jbrdsf = '残二级';
+    }
 
     if (jbrdsf != null && d.jbrdsf != jbrdsf) {
       if (d.jbrdsf != null) {
