@@ -372,8 +372,9 @@ jfxx(Map args) {
         ..cell('F').setValue(r.xjbt)
         ..cell('G').setValue(r.zfdj)
         ..cell('H').setValue(r is JfxxTotalRecord
-              ? '总计: ${r.total}' : r.sbjg.join('|'))
-        ..cell('J').setValue(r.hbrq.join('|'));
+              ? '总计' : r.sbjg.join('|'))
+        ..cell('J').setValue(r is JfxxTotalRecord
+              ? r.total.toStringAsFixed(2) : r.hbrq.join('|'));
     }
     workbook.toFile('$path\\${info.name}缴费查询单.xlsx');
   }
