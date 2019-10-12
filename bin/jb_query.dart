@@ -206,7 +206,9 @@ class JfxxTotalRecord extends JfxxRecord {
 }
 
 jfxx(Map args) {
-  getJfxxRecords(Result<Sncbqkcxjfxx> jfxx, Map<int, JfxxRecord> transferedRecords,
+  getJfxxRecords(
+      Result<Sncbqkcxjfxx> jfxx,
+      Map<int, JfxxRecord> transferedRecords,
       Map<int, JfxxRecord> untransferedRecords) {
     for (var data in jfxx.datas) {
       if (data.year != null) {
@@ -274,7 +276,7 @@ jfxx(Map args) {
         '市级补贴'.padLeft(5) +
         '县级补贴'.padLeft(5) +
         '政府代缴'.padLeft(5) +
-        '  社保经办机构 拨付时间');
+        '  社保经办机构 划拨时间');
     format(JfxxRecord r) {
       return (r is JfxxTotalRecord ? '合计' : '${r.year}'.padLeft(4)) +
           '${r.grjf}'.padLeft(9) +
@@ -293,7 +295,7 @@ jfxx(Map args) {
     }
   }
 
-   //print('${args['idcard']} ${args['\'export\'']}');
+  //print('${args['idcard']} ${args['\'export\'']}');
 
   String idcard = args['idcard'];
   bool export = args['\'export\''] == 'export';
@@ -322,8 +324,24 @@ jfxx(Map args) {
     return;
   }
 
+  const path = r'D:\征缴管理';
+  const tmplXlsx = '$path\\雨湖区城乡居民基本养老保险缴费查询单模板.xlsx';
+  xlsx.Workbook workbook;
+  xlsx.Sheet sheet;
+
   printInfo(info);
-  
+
+  if (export) {
+    workbook = xlsx.Workbook.fromFile(tmplXlsx);
+    sheet = workbook.sheetAt(0);
+    sheet
+      ..cell('A5').setValue(info.name)
+      ..cell('C5').setValue(info.idcard)
+      ..cell('E5').setValue(info.sbjg)
+      ..cell('G5').setValue(info.czmc)
+      ..cell('J5').setValue(info.jbsj);
+  }
+
   if (jfxx == null) {
     print('未查询到缴费信息');
     return;
@@ -340,5 +358,23 @@ jfxx(Map args) {
   printJfxxRecords(records, '已拨付缴费历史记录:');
   if (untransferedRecords.isNotEmpty) {
     printJfxxRecords(unrecords, '\n未拨付补录入记录:');
+  }
+
+  if (export) {
+    var index = 9, copyIndex = 9;
+    for (var r in records) {
+      sheet.copyRowTo(copyIndex, index++)
+        ..cell('A').setValue(r is! JfxxTotalRecord ? index - copyIndex : '')
+        ..cell('B').setValue(r is JfxxTotalRecord ? '合计' : r.year)
+        ..cell('C').setValue(r.grjf)
+        ..cell('D').setValue(r.sjbt)
+        ..cell('E').setValue(r.sqbt)
+        ..cell('F').setValue(r.xjbt)
+        ..cell('G').setValue(r.zfdj)
+        ..cell('H').setValue(r is JfxxTotalRecord
+              ? '总计: ${r.total}' : r.sbjg.join('|'))
+        ..cell('J').setValue(r.hbrq.join('|'));
+    }
+    workbook.toFile('$path\\${info.name}缴费查询单.xlsx');
   }
 }
