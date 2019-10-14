@@ -300,12 +300,15 @@ abstract class PersionInfo {
   @Json(name: 'aac049')
   int cbrq;
 
-  /// 参保身份
+  /// 参保身份编码
   @Json(name: 'aac066')
   String cbsf;
 
   /// 居保状态
   String get jbzt => _jbzt(cbzt, jfzt);
+
+  /// 居保身份(参保身份名称)
+  String get jbsf => _jbsf(cbsf);
 
   bool get valid => idcard != null;
 
@@ -565,6 +568,25 @@ String _hjxz(String code) {
       return '城市户籍';
     default:
       return '未知户籍';
+  }
+}
+
+String _jbsf(String code) {
+  switch (code) {
+    case '051':
+      return '贫困人口一级';
+    case '031':
+      return '特困一级';
+    case '061':
+      return '低保对象一级';
+    case '062':
+      return '低保对象二级';
+    case '021':
+      return '残一级';
+    case '022':
+      return '残二级';
+    default:
+      return code;
   }
 }
 

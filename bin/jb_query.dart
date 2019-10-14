@@ -263,8 +263,10 @@ jfxx(Map args) {
     var sbjg = info.sbjg;
     var czmc = info.czmc;
     var jbsj = info.jbsj;
+    var jbzt = info.jbzt;
+    var jbsf = info.jbsf;
     print('个人信息:');
-    print('$name $idcard $czmc $sbjg $jbsj\n');
+    print('$name $idcard $jbzt $jbsf $czmc $sbjg $jbsj\n');
   }
 
   printJfxxRecords(List<JfxxRecord> records, String message) {
