@@ -1,5 +1,5 @@
 import './_config.dart';
-import './db.dart';
+import './../db.dart';
 
 Future<MySqlConnection> getDbConnection() async {
   final conn = await MySqlConnection.connect(new ConnectionSettings(

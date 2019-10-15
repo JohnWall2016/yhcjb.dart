@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import './sync_socket.dart';
-import '../json/json.dart';
-export '../json/json.dart';
+import '../sync_socket.dart';
+import '../../json/json.dart';
+export '../../json/json.dart';
 import './_config.dart';
 
 typedef void Action(Session session);
@@ -1327,3 +1327,96 @@ class SuspiciousDeath extends Data with BaseInfo {
   @Json(name: 'bz')
   String memo;
 }
+
+const regexPaymentInfo = 
+   '''<tr>
+        <td height="32" align="center">姓名</td>
+        <td align="center">性别</td>
+        <td align="center" colspan="3">身份证</td>
+        <td align="center" colspan="2">困难级别</td>
+        <td align="center" colspan="3">户籍所在地</td>
+        <td align="center" colspan="2">所在地行政区划编码</td>
+      </tr>
+      <tr class="detail" component="detail">
+        <td height="39" align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center" colspan="3">(.+?)</td>
+        <td align="center" colspan="2">(.+?)</td>
+        <td align="center" colspan="3"(?:/>|>(.+?)</td>)
+        <td align="center" colspan="2">(.+?)</td>
+      </tr>
+      <tr>
+        <td height="77" align="center" rowspan="2">缴费起始年月</td>
+        <td align="center" rowspan="2">累计缴费年限</td>
+        <td align="center" rowspan="2" colspan="2">个人账户累计存储额</td>
+        <td height="25" align="center" colspan="8">其中</td>
+      </tr>
+      <tr>
+        <td height="30" align="center">个人缴费</td>
+        <td align="center">省级补贴</td>
+        <td align="center">市级补贴</td>
+        <td align="center">县级补贴</td>
+        <td align="center">集体补助</td>
+        <td align="center">被征地补助</td>
+        <td align="center">政府代缴</td>
+        <td align="center">利息</td>
+      </tr>
+      <tr class="detail" component="detail">
+        <td height="40" align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center" colspan="2">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+      </tr>
+      <tr>
+        <td align="center" rowspan="2">
+          <p>领取养老金起始时间</p>
+        </td>
+        <td align="center" rowspan="2">月养老金</td>
+        <td height="29" align="center" colspan="5">其中：基础养老金</td>
+        <td align="center" colspan="5">个人账户养老金</td>
+      </tr>
+      <tr>
+        <td height="31" align="center">国家补贴</td>
+        <td height="31" align="center">省级补贴</td>
+        <td align="center">市级补贴</td>
+        <td align="center">县级补贴</td>
+        <td align="center">加发补贴</td>
+        <td align="center">个人实缴部分</td>
+        <td align="center">缴费补贴部分</td>
+        <td align="center">集体补助部分</td>
+        <td align="center">被征地补助部分</td>
+        <td align="center">政府代缴部分</td>
+      </tr>
+      <tr class="detail" component="detail">
+        <td height="40" align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+        <td align="center">(.+?)</td>
+      </tr>''';
+
+const reXzhq = [
+    '湘潭市雨湖区((.*?乡)(.*?村))',
+    '湘潭市雨湖区((.*?乡)(.*?政府机关))',
+    '湘潭市雨湖区((.*?街道)办事处(.*?社区))',
+    '湘潭市雨湖区((.*?街道)办事处(.*?政府机关))',
+    '湘潭市雨湖区((.*?镇)(.*?社区))',
+    '湘潭市雨湖区((.*?镇)(.*?居委会))',
+    '湘潭市雨湖区((.*?镇)(.*?村))',
+    '湘潭市雨湖区((.*?街道)办事处(.*?村))',
+    '湘潭市雨湖区((.*?镇)(.*?政府机关))'
+];
