@@ -1,8 +1,7 @@
 import 'dart:convert';
 
-import '../sync_socket.dart';
-import '../../json/json.dart';
-export '../../json/json.dart';
+import '../net/sync_socket.dart';
+import '../json/json.dart';
 import './_config.dart';
 
 typedef void Action(Session session);
@@ -91,8 +90,8 @@ class Session extends SyncSocket {
   }
 
   static void use(Action action, {String user = '002'}) {
-    var session = Session(conf['host'], conf['port'], conf['users'][user]['id'],
-        conf['users'][user]['pwd']);
+    var session = Session(netconf['host'], netconf['port'], netconf['users'][user]['id'],
+        netconf['users'][user]['pwd']);
     try {
       session.login();
       action(session);
@@ -659,7 +658,7 @@ class Dyfh extends Data with PersionInfo {
     var path = '/hncjb/reports?method=htmlcontent&name=yljjs&'
         'aaz170=${escape(aaz170)}&aaz159=${escape(aaz159)}&aac001=${escape(grbh)}&'
         'aaz157=${escape(aaz157)}&aaa129=${escape(dwmc)}&aae211=${escape(accountMonth)}';
-    var sock = SyncSocket(conf['host'], conf['port']);
+    var sock = SyncSocket(netconf['host'], netconf['port']);
     try {
       var content = sock.getHttp(path);
       return RegExp(regexPaymentInfo).firstMatch(content);

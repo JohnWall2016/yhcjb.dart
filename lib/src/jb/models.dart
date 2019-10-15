@@ -1,23 +1,23 @@
 import './_config.dart';
-import './../db.dart';
+import '../db/db.dart';
 
 Future<MySqlConnection> getDbConnection() async {
   final conn = await MySqlConnection.connect(new ConnectionSettings(
-      host: conf['host'],
-      port: conf['port'],
-      user: conf['user'],
-      password: conf['password'],
-      db: conf['db']));
+      host: dbconf['host'],
+      port: dbconf['port'],
+      user: dbconf['user'],
+      password: dbconf['password'],
+      db: dbconf['db']));
   return conn;
 }
 
 Future<Database> getFpDatabase() async {
   return await Database.connect(
-      host: conf['host'],
-      port: conf['port'],
-      user: conf['user'],
-      password: conf['password'],
-      db: conf['db']);
+      host: dbconf['host'],
+      port: dbconf['port'],
+      user: dbconf['user'],
+      password: dbconf['password'],
+      db: dbconf['db']);
 }
 
 /// 扶贫历史数据
