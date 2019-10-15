@@ -573,6 +573,8 @@ String _hjxz(String code) {
 
 String _jbsf(String code) {
   switch (code) {
+    case '011':
+      return '普通参保人员';
     case '051':
       return '贫困人口一级';
     case '031':
