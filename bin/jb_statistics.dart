@@ -1,6 +1,6 @@
 import 'package:xlsx_decoder/xlsx_decoder.dart';
 import 'package:commander/commander.dart';
-import 'package:yhcjb/yhcjb.dart';
+import 'package:yhcjb/yhjb.dart';
 
 main(List<String> args) {
   var program = Command()..setDescription('统计程序');

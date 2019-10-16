@@ -1,5 +1,4 @@
-import 'package:yhcjb/yhcjb.dart';
-import 'package:yhcjb/yhcjb.dart' as prefix0;
+import 'package:yhcjb/yhjb.dart';
 
 main() async {
   /*var model = Model<FpHistoryData>(null);

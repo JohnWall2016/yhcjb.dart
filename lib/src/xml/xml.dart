@@ -1,5 +1,4 @@
 import 'package:xml/xml.dart';
-
 import './node.dart';
 
 XmlElement findChild(XmlNode node, String name) {

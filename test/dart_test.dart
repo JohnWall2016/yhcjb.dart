@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'dart:mirrors';
 
 import 'package:decimal/decimal.dart';
-import 'package:yhcjb/yhcjb.dart';
+import 'package:yhcjb/yhjb.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:yhcjb/yhcjb.dart';
+import 'package:yhcjb/yhjb.dart';
 import 'package:xlsx_decoder/xlsx_decoder.dart';
 import 'package:commander/commander.dart';
 

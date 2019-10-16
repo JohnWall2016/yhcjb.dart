@@ -1,4 +1,4 @@
-import 'package:yhcjb/yhcjb.dart';
+import 'package:yhcjb/yhjb.dart';
 
 main() {
   /*print(GrinfoQuery('430311195702091516').toJson());
