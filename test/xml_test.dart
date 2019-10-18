@@ -3,7 +3,9 @@ import 'package:yhcjb/src/xml/xml.dart';
 import 'package:yhcjb/yhqb.dart';
 
 main() {
-  var en = RequestEnvelop(SncbrycxRequest('430302195806251012'));
+  /*var en = RequestEnvelop(SncbrycxRequest('430302195806251012'));
+  print(en.toXmlString());*/
+  var en = RequestEnvelop('abc', 'efg', funid: '11111111');
   print(en.toXmlString());
 
   var xml = parse(test);

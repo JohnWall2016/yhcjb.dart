@@ -2,7 +2,28 @@ import 'dart:mirrors';
 import 'package:xml/xml.dart';
 import '../xml/node.dart';
 import '../xml/xml.dart';
+import '../net/sync_socket.dart';
 import './_config.dart';
+
+class Session extends SyncSocket {
+  String _userId;
+  String _password;
+
+  Session(String host, int port, String userId, String password)
+      : _userId = userId,
+        _password = password,
+        super(host, port);
+
+  void _request(String content) {
+    var request = HttpRequest('/hncjb/reports/crud', method: 'POST');
+    // TODO
+  }
+
+  void sendEnvelop<T extends Request>({T request, String funid}) {
+    var en = RequestEnvelop(_userId, _password, request: request, funid: funid);
+    _request(en.toXmlString());
+  }
+}
 
 class Xml {
   final String name;
@@ -10,13 +31,17 @@ class Xml {
   const Xml({this.name, this.ignored});
 }
 
-class RequestEnvelop<T extends RequestBody> {
+class RequestEnvelop<T extends Request> {
   RequestHeader header;
   T body;
 
-  RequestEnvelop(T body) {
-    this.header = RequestHeader(funid: body.funid);
-    this.body = body;
+  RequestEnvelop(String usr, String pwd, {T request, String funid}) {
+    if (request != null) {
+      this.header = RequestHeader(usr: usr, pwd: pwd, funid: request.funid);
+      this.body = request;
+    } else {
+      this.header = RequestHeader(usr: usr, pwd: pwd, funid: funid);
+    }
   }
 
   XmlNode toXml() {
@@ -31,11 +56,11 @@ class RequestEnvelop<T extends RequestBody> {
           ..children.add(Element('soap:Body')
             ..children.add(
                 Element('in:business', {'xmlns:in': 'http://www.molss.gov.cn/'})
-                  ..children.addAll(body.toNodes()))))
+                  ..children.addAll(body?.toNodes() ?? []))))
         .toXmlNode();
   }
 
-  String toXmlString() => toXml().toXmlString();
+  String toXmlString() => '<?xml version="1.0" encoding="GBK"?>' + toXml().toXmlString();
 }
 
 class Paramable {
@@ -77,30 +102,20 @@ class Paramable {
   }
 }
 
-class UserInfo extends Paramable {
-  String usr, pwd;
-  UserInfo(String usr, String pwd) {
-    if (usr == null || pwd == null) {
-      this.usr = netconf['users']['sj']['id'];
-      this.pwd = netconf['users']['sj']['pwd'];
-    }
-  }
+class RequestHeader extends Paramable {
+  final String usr, pwd, funid;
+  RequestHeader({this.usr, this.pwd, this.funid});
 }
 
-class RequestHeader extends UserInfo {
-  final String funid;
-  RequestHeader({usr, pwd, this.funid}) : super(usr, pwd);
-}
-
-class RequestBody extends Paramable {
+class Request extends Paramable {
   @Xml(ignored: true)
   final String funid;
 
   final String functionid;
-  RequestBody(this.funid, this.functionid);
+  Request(this.funid, this.functionid);
 }
 
-class SncbrycxRequest extends RequestBody {
+class SncbrycxRequest extends Request {
   int startrow = 1;
   int row_count = -1;
   int pagesize = 500;
@@ -224,13 +239,13 @@ class Resultable {
   }
 }
 
-class ResponseEnvelop<T extends ResponseBody> {
+class ResponseEnvelop<T extends Response> {
   ResponseHeader header;
   T body;
 
   ResponseEnvelop();
 
-  static ResponseEnvelop<T> fromXmlDocument<T extends ResponseBody>(
+  static ResponseEnvelop<T> fromXmlDocument<T extends Response>(
       XmlDocument doc) {
     if (doc != null) {
       var env = findChild(doc, 'Envelope');
@@ -253,7 +268,7 @@ class ResponseEnvelop<T extends ResponseBody> {
     return null;
   }
 
-  static ResponseEnvelop<T> fromXmlString<T extends ResponseBody>(String xml) {
+  static ResponseEnvelop<T> fromXmlString<T extends Response>(String xml) {
     return ResponseEnvelop.fromXmlDocument(parse(xml));
   }
 }
@@ -262,7 +277,7 @@ class ResponseHeader extends Resultable {
   String sessionID, message;
 }
 
-class ResponseBody extends Resultable {
+class Response extends Resultable {
   String result;
 }
 
@@ -277,7 +292,7 @@ class SncbrycxItem extends Resultable {
   String sbjg;
 }
 
-class SncbrycxResponse extends ResponseBody {
+class SncbrycxResponse extends Response {
   List<SncbrycxItem> querylist;
   int row_count;
 }
