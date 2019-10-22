@@ -19,15 +19,15 @@ class Session extends SyncSocket {
   String get url => '${host}:{port}';
 
   void _request(String content) {
-    var request = HttpRequest('/sbzhpt/MainServlet', method: 'POST', encoding: gbk)
-      ..addHeader('SOAPAction', 'mainservlet')
-      ..addHeader('Content-Type', 'text/html;charset=GBK')
-      ..addHeader('Host', url)
-      ..addHeader('Connection', 'Keep-Alive')
-      ..addHeader('Cache-Control', 'no-cache');
+    var request =
+        HttpRequest('/sbzhpt/MainServlet', method: 'POST', encoding: gbk)
+          ..addHeader('SOAPAction', 'mainservlet')
+          ..addHeader('Content-Type', 'text/html;charset=GBK')
+          ..addHeader('Host', url)
+          ..addHeader('Connection', 'Keep-Alive')
+          ..addHeader('Cache-Control', 'no-cache');
     if (_sessionId != null) {
-      request.addHeader(
-          'Cookie', 'JSESSIONID=$_sessionId');
+      request.addHeader('Cookie', 'JSESSIONID=$_sessionId');
     }
     request.addBody(content);
     write(request.toBytes());
@@ -39,6 +39,20 @@ class Session extends SyncSocket {
   }
 
   login() {
+    sendEnvelop(
+        funid: 'F00.00.00.00|192.168.1.110|PC-20170427DGON|00-05-0F-08-1A-34');
+    var header = readHttpHeader();
+    var cookies = header['set-cookie'];
+    if (cookies != null) {
+      for (var cookie in cookies) {
+        var match = RegExp("JSESSIONID=(.+?);").firstMatch(cookie);
+        if (match != null) {
+          _sessionId = match.group(1);
+          break;
+        }
+      }
+    }
+    readHttpBody(header);
     // TODO
   }
 }
@@ -47,39 +61,6 @@ class Xml {
   final String name;
   final bool ignored;
   const Xml({this.name, this.ignored});
-}
-
-class RequestEnvelop<T extends Request> {
-  RequestHeader header;
-  T body;
-
-  RequestEnvelop(String usr, String pwd, {T request, String funid}) {
-    if (request != null) {
-      this.header = RequestHeader(usr: usr, pwd: pwd, funid: request.funid);
-      this.body = request;
-    } else {
-      this.header = RequestHeader(usr: usr, pwd: pwd, funid: funid);
-    }
-  }
-
-  XmlNode toXml() {
-    return (Element('soap:Envelope', {
-      'xmlns:soap': 'http://schemas.xmlsoap.org/soap/envelope/',
-      'soap:encodingStyle': 'http://schemas.xmlsoap.org/soap/encoding/'
-    })
-          ..children.add(Element('soap:Header')
-            ..children.add(
-                Element('in:system', {'xmlns:in': 'http://www.molss.gov.cn/'})
-                  ..children.addAll(header.toNodes())))
-          ..children.add(Element('soap:Body')
-            ..children.add(
-                Element('in:business', {'xmlns:in': 'http://www.molss.gov.cn/'})
-                  ..children.addAll(body?.toNodes() ?? []))))
-        .toXmlNode();
-  }
-
-  String toXmlString() =>
-      '<?xml version="1.0" encoding="GBK"?>' + toXml().toXmlString();
 }
 
 class Paramable {
@@ -134,25 +115,45 @@ class Request extends Paramable {
   Request(this.funid, this.functionid);
 }
 
-class SncbrycxRequest extends Request {
-  int startrow = 1;
-  int row_count = -1;
-  int pagesize = 500;
-  String clientsql;
+class RequestEnvelop<T extends Request> {
+  RequestHeader header;
+  T body;
 
-  @Xml(ignored: true)
-  String idcard;
-
-  SncbrycxRequest(this.idcard) : super('F00.01.03', 'F27.06') {
-    clientsql = '( aac002 = &apos;$idcard&apos;)';
+  RequestEnvelop(String usr, String pwd, {T request, String funid}) {
+    if (request != null) {
+      this.header = RequestHeader(usr: usr, pwd: pwd, funid: request.funid);
+      this.body = request;
+    } else {
+      this.header = RequestHeader(usr: usr, pwd: pwd, funid: funid);
+    }
   }
+
+  XmlNode toXml() {
+    return (Element('soap:Envelope', {
+      'xmlns:soap': 'http://schemas.xmlsoap.org/soap/envelope/',
+      'soap:encodingStyle': 'http://schemas.xmlsoap.org/soap/encoding/'
+    })
+          ..children.add(Element('soap:Header')
+            ..children.add(
+                Element('in:system', {'xmlns:in': 'http://www.molss.gov.cn/'})
+                  ..children.addAll(header.toNodes())))
+          ..children.add(Element('soap:Body')
+            ..children.add(
+                Element('in:business', {'xmlns:in': 'http://www.molss.gov.cn/'})
+                  ..children.addAll(body?.toNodes() ?? []))))
+        .toXmlNode();
+  }
+
+  String toXmlString() =>
+      '<?xml version="1.0" encoding="GBK"?>' + toXml().toXmlString();
 }
 
 final ResultableType = reflectType(Resultable);
+
 final NumType = reflectType(num);
 
 class Resultable {
-  static convert(XmlNode node) {
+  static Map<String, dynamic> convert(XmlNode node) {
     var map = <String, dynamic>{};
     for (var node in node?.children ?? []) {
       if (node is XmlElement) {
@@ -258,6 +259,14 @@ class Resultable {
   }
 }
 
+class ResponseHeader extends Resultable {
+  String sessionID, message;
+}
+
+class Response extends Resultable {
+  String result;
+}
+
 class ResponseEnvelop<T extends Response> {
   ResponseHeader header;
   T body;
@@ -292,12 +301,18 @@ class ResponseEnvelop<T extends Response> {
   }
 }
 
-class ResponseHeader extends Resultable {
-  String sessionID, message;
-}
+class SncbrycxRequest extends Request {
+  int startrow = 1;
+  int row_count = -1;
+  int pagesize = 500;
+  String clientsql;
 
-class Response extends Resultable {
-  String result;
+  @Xml(ignored: true)
+  String idcard;
+
+  SncbrycxRequest(this.idcard) : super('F00.01.03', 'F27.06') {
+    clientsql = '( aac002 = &apos;$idcard&apos;)';
+  }
 }
 
 class SncbrycxItem extends Resultable {
