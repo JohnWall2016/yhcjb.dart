@@ -1,5 +1,6 @@
 import 'dart:mirrors';
 import 'package:xml/xml.dart';
+import 'package:fast_gbk/fast_gbk.dart';
 import '../xml/node.dart';
 import '../xml/xml.dart';
 import '../net/sync_socket.dart';
@@ -8,20 +9,37 @@ import './_config.dart';
 class Session extends SyncSocket {
   String _userId;
   String _password;
+  String _sessionId;
 
   Session(String host, int port, String userId, String password)
       : _userId = userId,
         _password = password,
         super(host, port);
 
+  String get url => '${host}:{port}';
+
   void _request(String content) {
-    var request = HttpRequest('/hncjb/reports/crud', method: 'POST');
-    // TODO
+    var request = HttpRequest('/sbzhpt/MainServlet', method: 'POST', encoding: gbk)
+      ..addHeader('SOAPAction', 'mainservlet')
+      ..addHeader('Content-Type', 'text/html;charset=GBK')
+      ..addHeader('Host', url)
+      ..addHeader('Connection', 'Keep-Alive')
+      ..addHeader('Cache-Control', 'no-cache');
+    if (_sessionId != null) {
+      request.addHeader(
+          'Cookie', 'JSESSIONID=$_sessionId');
+    }
+    request.addBody(content);
+    write(request.toBytes());
   }
 
   void sendEnvelop<T extends Request>({T request, String funid}) {
     var en = RequestEnvelop(_userId, _password, request: request, funid: funid);
     _request(en.toXmlString());
+  }
+
+  login() {
+    // TODO
   }
 }
 
@@ -60,7 +78,8 @@ class RequestEnvelop<T extends Request> {
         .toXmlNode();
   }
 
-  String toXmlString() => '<?xml version="1.0" encoding="GBK"?>' + toXml().toXmlString();
+  String toXmlString() =>
+      '<?xml version="1.0" encoding="GBK"?>' + toXml().toXmlString();
 }
 
 class Paramable {

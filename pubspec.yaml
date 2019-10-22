@@ -20,6 +20,7 @@ dependencies:
   decimal: ^0.3.3
   image: ^2.1.4
   xml: ^3.5.0
+  fast_gbk: ^0.1.1+1
 
 dev_dependencies:
   pedantic: ^1.0.0
