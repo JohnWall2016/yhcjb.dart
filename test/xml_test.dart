@@ -18,7 +18,8 @@ main() {
     print(Resultable.convert(business));
   }
 
-  var res = ResponseEnvelop.fromXmlString<SncbrycxResponse>(test);
+  var res =
+      ResponseEnvelop.fromXmlString<ResponseHeader, SncbrycxResponse>(test);
   print('${res.header.sessionID}|${res.header.message}');
   print('${res.body.result}|${res.body.row_count}');
   for (var item in res.body.querylist) {

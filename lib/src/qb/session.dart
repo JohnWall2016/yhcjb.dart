@@ -14,7 +14,7 @@ class Session extends SyncSocket {
   Session(String host, int port, String userId, String password)
       : _userId = userId,
         _password = password,
-        super(host, port);
+        super(host, port, encoding: gbk);
 
   String get url => '${host}:{port}';
 
@@ -38,7 +38,11 @@ class Session extends SyncSocket {
     _request(en.toXmlString());
   }
 
-  login() {
+  ResponseEnvelop<ResponseHeader, T> getEnvelop<T extends Response>() {
+    return ResponseEnvelop.fromXmlString(readHttpBody());
+  }
+
+  ResponseEnvelop<LoginHeader, LoginResponse> login() {
     sendEnvelop(
         funid: 'F00.00.00.00|192.168.1.110|PC-20170427DGON|00-05-0F-08-1A-34');
     var header = readHttpHeader();
@@ -52,8 +56,27 @@ class Session extends SyncSocket {
         }
       }
     }
-    readHttpBody(header);
+    return loginInfo =
+        ResponseEnvelop.fromXmlString<LoginHeader, LoginResponse>(
+            readHttpBody(header));
+  }
+
+  void logout() {
     // TODO
+  }
+
+  ResponseEnvelop<LoginHeader, LoginResponse> loginInfo;
+
+  static void use(void Function(Session) action, {String user = 'sj'}) {
+    var session = Session(netconf['host'], netconf['port'],
+        netconf['users'][user]['id'], netconf['users'][user]['pwd']);
+    try {
+      session.login();
+      action(session);
+      session.logout();
+    } finally {
+      session.close();
+    }
   }
 }
 
@@ -263,25 +286,57 @@ class ResponseHeader extends Resultable {
   String sessionID, message;
 }
 
+class LoginHeader extends Resultable {
+  String sessionID, username, producttype;
+}
+
+class Acl extends Resultable {
+  String id;
+}
+
+class LoginResponse extends Response {
+  String passwd;
+
+  /// 单位名称
+  @Xml(name: 'sab090')
+  String dwmc;
+
+  String userid;
+
+  String usr;
+
+  @Xml(name: 'operator_name')
+  String operatorName;
+
+  String pwd;
+
+  @Xml(name: 'login_name')
+  String loginName;
+
+  List<Acl> acl;
+}
+
 class Response extends Resultable {
   String result;
 }
 
-class ResponseEnvelop<T extends Response> {
-  ResponseHeader header;
+class ResponseEnvelop<S extends Resultable, T extends Response> {
+  S header;
   T body;
 
   ResponseEnvelop();
 
-  static ResponseEnvelop<T> fromXmlDocument<T extends Response>(
-      XmlDocument doc) {
+  static ResponseEnvelop<S, T>
+      fromXmlDocument<S extends Resultable, T extends Response>(
+          XmlDocument doc) {
     if (doc != null) {
       var env = findChild(doc, 'Envelope');
       if (env != null) {
-        var res = ResponseEnvelop<T>();
+        var res = ResponseEnvelop<S, T>();
         var header = findChild(env, 'Header');
         if (header != null) {
-          res.header = Resultable.fromNode<ResponseHeader>(header);
+          var system = findChild(header, 'system');
+          res.header = Resultable.fromNode<S>(system ?? header);
         }
         var body = findChild(env, 'Body');
         if (body != null) {
@@ -296,7 +351,8 @@ class ResponseEnvelop<T extends Response> {
     return null;
   }
 
-  static ResponseEnvelop<T> fromXmlString<T extends Response>(String xml) {
+  static ResponseEnvelop<S, T>
+      fromXmlString<S extends Resultable, T extends Response>(String xml) {
     return ResponseEnvelop.fromXmlDocument(parse(xml));
   }
 }
@@ -315,18 +371,19 @@ class SncbrycxRequest extends Request {
   }
 }
 
-class SncbrycxItem extends Resultable {
+class Sncbry extends Resultable {
   @Xml(name: 'aac003')
   String name;
 
   @Xml(name: 'aac002')
   String idcard;
 
+  /// 社保机构
   @Xml(name: 'aab300')
   String sbjg;
 }
 
 class SncbrycxResponse extends Response {
-  List<SncbrycxItem> querylist;
+  List<Sncbry> querylist;
   int row_count;
 }
