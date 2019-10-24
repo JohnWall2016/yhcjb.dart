@@ -73,27 +73,27 @@ generateJzpz(List args) {
     for (var i = 0; i < numPerPage; i++) {
       var no = page * numPerPage + i;
       if (no < length) {
-        sheet.rowAt(3 + i * 11)
+        sheet.rowAt(3 + i * 12)
             .cell('A').setValue(list[no].date);
-        sheet.rowAt(4 + i * 11)
+        sheet.rowAt(4 + i * 12)
             .cell('S').setValue(list[no].bh);
-        sheet.rowAt(5 + i * 11)
+        sheet.rowAt(5 + i * 12)
             .cell('AA').setValue('附凭证 ${list[no].pzzs} 张');
-        sheet.rowAt(6 + i * 11)
+        sheet.rowAt(6 + i * 12)
             ..cell('A').setValue(list[no].zy)
             ..cell('B').setValue(list[no].jfkm)
             ..cell('C').setValue(list[no].jfje);
-        sheet.rowAt(7 + i * 11)
+        sheet.rowAt(7 + i * 12)
             ..cell('B').setValue(list[no].dfkm)
             ..cell('N').setValue(list[no].dfje);
-        sheet.rowAt(10 + i * 11)
-            ..cell('A').setValue('    合计：${list[i].hj}')
+        sheet.rowAt(10 + i * 12)
+            ..cell('A').setValue('    合计：${list[no].hj}')
             ..cell('C').setValue(list[no].jfje)
             ..cell('N').setValue(list[no].dfje);
-        sheet.rowAt(11 + i * 11)
+        sheet.rowAt(11 + i * 12)
             ..cell('A').setValue(
               '会计主管：${list[no].kjzg}       记账：${list[no].jz}          ' +
-              '审核：${list[no].sh}       制单：${list[no].zd}        出纳：${list[no].cn}'
+              '审核：${list[no].sh}       制单：${list[no].zd}        出纳：${list[no].cn ?? ''}'
             );
       }
     }
