@@ -7,7 +7,7 @@ import 'package:decimal/decimal.dart';
 main(List<String> args) {
   Command()
     ..setDescription('记账凭证生成程序')
-    ..setArguments('<xlsx> <beginRow> <endRow>',
+    ..setArguments('<xlsx> <beginRow> <endRow> <outdir>',
         {'xlsx': '凭证记录XLSX文件', 'beginRow': '开始行', 'endRow': '结束行'})
     ..setAction((List args) => generateJzpz(args))
     ..parse(args);
@@ -32,9 +32,9 @@ generateJzpz(List args) {
   String inXslx = args[0];
   int start = int.parse(args[1]);
   int end = int.parse(args[2]);
+  String outDir = args[3];
 
   String tmplXlsx = r'D:\工会工作\记账凭证生成\excel会计记账凭证模板表.xlsx';
-  String outDir = r'D:\工会工作\记账凭证生成\生成目录';
   int numPerPage = 3;
 
   var workbook = xlsx.Workbook.fromFile(inXslx);
