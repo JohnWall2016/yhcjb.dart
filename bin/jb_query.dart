@@ -183,6 +183,9 @@ class JfxxRecord {
   /// 政府代缴
   num zfdj = 0;
 
+  /// 集体补助
+  num jtbz = 0;
+
   /// 划拨日期
   Set<String> hbrq = Set();
 
@@ -197,6 +200,7 @@ class JfxxRecord {
         '$sqbt'.padLeft(9) +
         '$xjbt'.padLeft(9) +
         '$zfdj'.padLeft(9) +
+        '$jtbz'.padLeft(9) +
         '   ${sbjg.join('|')} ${hbrq.join('|')}';
   }
 }
@@ -235,8 +239,11 @@ jfxx(Map args) {
           case '11': // 政府代缴
             record.zfdj += data.amount;
             break;
+          case '6': // 集体补助
+            record.jtbz += data.amount;
+            break;
           default:
-            throw '未知缴费类型';
+            print('未知缴费类型${data.item.value}, 金额${data.amount}\n');
         }
         record.sbjg.add(data.agency ?? ''); // 社保机构
         record.hbrq.add(data.transferDate ?? ''); // 划拨日期
@@ -252,8 +259,15 @@ jfxx(Map args) {
       ..grjf += r.grjf
       ..sjbt += r.sjbt
       ..sqbt += r.sqbt
-      ..xjbt += r.xjbt);
-    total.total = total.grjf + total.sjbt + total.sqbt + total.xjbt;
+      ..xjbt += r.xjbt
+      ..zfdj += r.zfdj
+      ..jtbz += r.jtbz);
+    total.total = total.grjf +
+        total.sjbt +
+        total.sqbt +
+        total.xjbt +
+        total.zfdj +
+        total.jtbz;
     return results..add(total);
   }
 
@@ -278,6 +292,7 @@ jfxx(Map args) {
         '市级补贴'.padLeft(5) +
         '县级补贴'.padLeft(5) +
         '政府代缴'.padLeft(5) +
+        '集体补助'.padLeft(5) +
         '  社保经办机构 划拨时间');
     format(JfxxRecord r) {
       return (r is JfxxTotalRecord ? '合计' : '${r.year}'.padLeft(4)) +
@@ -286,6 +301,7 @@ jfxx(Map args) {
           '${r.sqbt}'.padLeft(9) +
           '${r.xjbt}'.padLeft(9) +
           '${r.zfdj}'.padLeft(9) +
+          '${r.jtbz}'.padLeft(9) +
           (r is JfxxTotalRecord
               ? '   总计: ${r.total}'.padLeft(9)
               : '   ${r.sbjg.join('|')} ${r.hbrq.join('|')}');
@@ -341,7 +357,7 @@ jfxx(Map args) {
       ..cell('C5').setValue(info.idcard)
       ..cell('E5').setValue(info.sbjg)
       ..cell('G5').setValue(info.czmc)
-      ..cell('J5').setValue(info.jbsj);
+      ..cell('K5').setValue(info.jbsj);
   }
 
   if (jfxx == null) {
@@ -373,10 +389,11 @@ jfxx(Map args) {
         ..cell('E').setValue(r.sqbt)
         ..cell('F').setValue(r.xjbt)
         ..cell('G').setValue(r.zfdj)
-        ..cell('H').setValue(r is JfxxTotalRecord
-              ? '总计' : r.sbjg.join('|'))
-        ..cell('J').setValue(r is JfxxTotalRecord
-              ? r.total.toStringAsFixed(2) : r.hbrq.join('|'));
+        ..cell('H').setValue(r.jtbz)
+        ..cell('I').setValue(r is JfxxTotalRecord ? '总计' : r.sbjg.join('|'))
+        ..cell('K').setValue(r is JfxxTotalRecord
+            ? r.total.toStringAsFixed(2)
+            : r.hbrq.join('|'));
     }
     workbook.toFile('$path\\${info.name}缴费查询单.xlsx');
   }
