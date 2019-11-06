@@ -112,10 +112,16 @@ main() {
   print((1024.62 * 100).toInt());
 */
   'Hello World'.put();
+  10.put();
+  true.put();
 }
 
 extension StringEx on String {
   void put() => print(this);
+}
+
+extension Put<T> on T {
+  void put() => print("$T: $this");
 }
 
 typedef FunctionWithMap = dynamic Function(Map<String, String> args);
