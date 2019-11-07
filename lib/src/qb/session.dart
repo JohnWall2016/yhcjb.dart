@@ -137,6 +137,24 @@ class Request extends Paramable {
 
   final String functionid;
   Request(this.funid, this.functionid);
+
+  String createSql(Map<String, String> props) {
+    String sql;
+    for (var key in props.keys) {
+      var value = props[key];
+      if (value != null) {
+        if (sql == null) {
+          sql = '$key = &apos;$value&apos;';
+        } else {
+          sql += ' AND $key = &apos;$value&apos;';
+        }
+      }
+    }
+    if (sql != null) {
+      sql = '( $sql)';
+    }
+    return sql;
+  }
 }
 
 class RequestEnvelop<T extends Request> {
@@ -188,7 +206,7 @@ abstract class MappingField<F, T> extends CustomField<F> {
     this.mapping = mapping ?? {};
     this.notMatch = notMatch ?? () => 'NotMatch: $value';
   }
-  
+
   T map(F value) => mapping[value];
 
   @override
@@ -389,38 +407,41 @@ class SncbrycxRequest extends Request {
   int pagesize = 500;
   String clientsql;
 
-  @Xml(ignored: true)
-  String idcard;
-
-  SncbrycxRequest(this.idcard) : super('F00.01.03', 'F27.06') {
-    clientsql = '( aac002 = &apos;$idcard&apos;)';
+  SncbrycxRequest({String idcard, String name}) : super('F00.01.03', 'F27.06') {
+    clientsql = createSql({
+      'c.aac002': idcard,
+      'c.aac003': name,
+    });
   }
 }
 
 /// 参保状态
 class Cbzt extends MappingField<String, String> {
-  Cbzt(): super({
-    '1': '参保缴费',
-    '2': '暂停缴费',
-    '3': '终止缴费',
-  });
+  Cbzt()
+      : super({
+          '1': '参保缴费',
+          '2': '暂停缴费',
+          '3': '终止缴费',
+        });
 }
 
 /// 社会保险状态
 class Shbxzt extends MappingField<String, String> {
-  Shbxzt(): super({
-    '1': '在职',
-    '2': '退休',
-    '4': '终止',
-  });
+  Shbxzt()
+      : super({
+          '1': '在职',
+          '2': '退休',
+          '4': '终止',
+        });
 }
 
 /// 缴费人员类别
 class Jfrylx extends MappingField<String, String> {
-  Jfrylx(): super({
-    '101': '单位在业人员',
-    '102': '个体缴费',
-  });
+  Jfrylx()
+      : super({
+          '101': '单位在业人员',
+          '102': '个体缴费',
+        });
 }
 
 class Sncbry extends Resultable {
@@ -453,6 +474,9 @@ class Sncbry extends Resultable {
 }
 
 class SncbrycxResponse extends Response {
-  List<Sncbry> querylist;
-  int row_count;
+  @Xml(name: 'querylist')
+  List<Sncbry> list;
+
+  @Xml(name: 'row_count')
+  int count;
 }

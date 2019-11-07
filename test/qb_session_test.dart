@@ -9,12 +9,18 @@ main() {
       print(acl.id);
     }
     */
-    session.sendEnvelop(request: SncbrycxRequest('430302195910141016'));
-    //print(session.readHttpBody());
+    // session.sendEnvelop(request: SncbrycxRequest('43030219'));
+    // session.sendEnvelop(request: SncbrycxRequest(idcard: '43031119'));
+    session.sendEnvelop(request: SncbrycxRequest(name: '李', idcard: '43031119'));
+    // print(session.readHttpBody());
     var response = session.getEnvelop<SncbrycxResponse>();
-    for (var sncbry in response.body.querylist) {
-      //print(sncbry);
-      print(sncbry.toJson(true));
+    
+    if (response.body.count > 0) {
+      var i = 1;  
+      for (var sncbry in response.body.list) {
+        //print(sncbry);
+        print('${i++}: ${sncbry.toJson(true)}');
+      }
     }
   });
 }
