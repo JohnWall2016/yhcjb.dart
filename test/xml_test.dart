@@ -19,10 +19,10 @@ main() {
   }
 
   var res =
-      ResponseEnvelop.fromXmlString<ResponseHeader, SncbrycxResponse>(test);
+      ResponseEnvelop.fromXmlString<ResponseHeader, PageResponse<Sncbry>>(test);
   print('${res.header.sessionID}|${res.header.message}');
-  print('${res.body.result}|${res.body.row_count}');
-  for (var item in res.body.querylist) {
+  print('${res.body.result}|${res.body.count}');
+  for (var item in res.body.list) {
     print('${item.name}|${item.idcard}|${item.sbjg}');
   }
 }

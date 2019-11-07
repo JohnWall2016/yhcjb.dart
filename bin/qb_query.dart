@@ -19,15 +19,21 @@ info(String idOrName) {
     } else {
       session.sendEnvelop(request: SncbrycxRequest(name: idOrName));
     }
-    var response = session.getEnvelop<SncbrycxResponse>();
+    var response = session.getEnvelop<PageResponse<Sncbry>>();
 
     if (response.body.count > 0) {
       var i = 1;
       for (var ry in response.body.list) {
+        session.sendEnvelop(request: CompanyRequest(ry.companyID));
+        var response = session.getEnvelop<PageResponse<CompanyInfo>>();
+        var company = ry.companyID;
+        if (response.body.count > 0) {
+          company = response.body.list[0].name;
+        }
         print('${i++}'.padLeft(4) +
           '. ' + '${ry.idcard}'.padRight(19) +
           '${ry.name} ${ry.sbjg} ${ry.cbzt} ${ry.jfrylx} ' +
-          '${ry.shbxzt} ${ry.personID} ${ry.companyID}');
+          '${ry.shbxzt} ${ry.personID} ${company}');
       }
     } else {
       print('未查到参保信息');

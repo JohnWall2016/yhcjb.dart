@@ -401,18 +401,37 @@ class ResponseEnvelop<S extends Resultable, T extends Response> {
   }
 }
 
-class SncbrycxRequest extends Request {
+class PageRequest extends Request {
   int startrow = 1;
   int row_count = -1;
-  int pagesize = 500;
+  int pagesize = 200;
   String clientsql;
 
-  SncbrycxRequest({String idcard, String name}) : super('F00.01.03', 'F27.06') {
-    clientsql = createSql({
-      'c.aac002': idcard,
-      'c.aac003': name,
-    });
+  PageRequest(String funID, String functionID,
+      {Map<String, String> sqlProps, int startRow, int rowCount, int pageSize})
+      : super(funID, functionID) {
+    if (sqlProps != null) clientsql = createSql(sqlProps);
+    if (startRow != null) startrow = startRow;
+    if (rowCount != null) row_count = rowCount;
+    if (pageSize != null) pagesize = pageSize;
   }
+}
+
+class PageResponse<T> extends Response {
+  @Xml(name: 'querylist')
+  List<T> list;
+
+  @Xml(name: 'row_count')
+  int count;
+}
+
+/// 省内参保人员查询
+class SncbrycxRequest extends PageRequest {
+  SncbrycxRequest({String idcard, String name})
+      : super('F00.01.03', 'F27.06', sqlProps: {
+          'c.aac002': idcard,
+          'c.aac003': name,
+        });
 }
 
 /// 参保状态
@@ -473,10 +492,19 @@ class Sncbry extends Resultable {
   Jfrylx jfrylx;
 }
 
-class SncbrycxResponse extends Response {
-  @Xml(name: 'querylist')
-  List<Sncbry> list;
+/// 单位查询统计
+class CompanyRequest extends PageRequest {
+  @Xml(name: 'aab034')
+  String region;
 
-  @Xml(name: 'row_count')
-  int count;
+  CompanyRequest(String id)
+      : super('F00.01.03', 'F27.01',
+            sqlProps: {'AB01.SAB100': id}, pageSize: 0) {
+    region = id.substring(0, 6);
+  }
+}
+
+class CompanyInfo extends Resultable {
+  @Xml(name: 'aab004')
+  String name;
 }
