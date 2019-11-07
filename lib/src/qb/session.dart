@@ -1,6 +1,7 @@
 import 'dart:mirrors';
 import 'package:xml/xml.dart';
 import 'package:fast_gbk/fast_gbk.dart';
+import 'package:yhcjb/src/json/json.dart';
 import '../xml/node.dart';
 import '../xml/xml.dart';
 import '../net/sync_socket.dart';
@@ -175,7 +176,28 @@ final ResultableType = reflectType(Resultable);
 
 final NumType = reflectType(num);
 
-class Resultable {
+abstract class CustomField<T> {
+  T value;
+}
+
+abstract class MappingField<F, T> extends CustomField<F> {
+  Map<F, T> mapping;
+  String Function() notMatch;
+
+  MappingField(Map<F, T> mapping, {String notMatch()}) {
+    this.mapping = mapping ?? {};
+    this.notMatch = notMatch ?? () => 'NotMatch: $value';
+  }
+  
+  T map(F value) => mapping[value];
+
+  @override
+  String toString() => '${map(value) ?? notMatch()}';
+}
+
+final CustomFieldType = reflectType(CustomField);
+
+class Resultable extends Jsonable {
   static Map<String, dynamic> convert(XmlNode node) {
     var map = <String, dynamic>{};
     for (var node in node?.children ?? []) {
@@ -275,6 +297,10 @@ class Resultable {
             if (n != null) {
               inst.setField(sName, n);
             }
+          } else if (type.isSubtypeOf(CustomFieldType)) {
+            var argInst = (type as ClassMirror).newInstance(Symbol(''), []);
+            argInst.setField(Symbol('value'), value);
+            inst.setField(sName, argInst.reflectee);
           }
         }
       }
@@ -371,6 +397,32 @@ class SncbrycxRequest extends Request {
   }
 }
 
+/// 参保状态
+class Cbzt extends MappingField<String, String> {
+  Cbzt(): super({
+    '1': '参保缴费',
+    '2': '暂停缴费',
+    '3': '终止缴费',
+  });
+}
+
+/// 社会保险状态
+class Shbxzt extends MappingField<String, String> {
+  Shbxzt(): super({
+    '1': '在职',
+    '2': '退休',
+    '4': '终止',
+  });
+}
+
+/// 缴费人员类别
+class Jfrylx extends MappingField<String, String> {
+  Jfrylx(): super({
+    '101': '单位在业人员',
+    '102': '个体缴费',
+  });
+}
+
 class Sncbry extends Resultable {
   @Xml(name: 'aac003')
   String name;
@@ -381,6 +433,23 @@ class Sncbry extends Resultable {
   /// 社保机构
   @Xml(name: 'aab300')
   String sbjg;
+
+  /// 个人编号
+  @Xml(name: 'sac100')
+  String personID;
+
+  /// 单位编号
+  @Xml(name: 'sab100')
+  String companyID;
+
+  @Xml(name: 'aac031')
+  Cbzt cbzt;
+
+  @Xml(name: 'aac008')
+  Shbxzt shbxzt;
+
+  @Xml(name: 'sac007')
+  Jfrylx jfrylx;
 }
 
 class SncbrycxResponse extends Response {

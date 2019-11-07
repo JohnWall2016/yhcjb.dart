@@ -18,7 +18,7 @@ abstract class MappingField<F, T> extends CustomField<F> {
   Map<F, T> mapping;
   String Function() notMatch;
 
-  MappingField(mapping, {notMatch}) {
+  MappingField(Map<F, T> mapping, {String notMatch()}) {
     this.mapping = mapping ?? {};
     this.notMatch = notMatch ?? () => 'NotMatch: $value';
   }
